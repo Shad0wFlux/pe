@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سجل الساعات التفصيلي — مستشفى برلين التطوعي</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="theme.js"></script>
+</head>
+<body style="display:none;">
+
+  <div class="admin-layout">
+    
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="window.toggleSidebar()"></div>
+
+    <!-- ===== Collapsible Sidebar ===== -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="sidebar-brand">
+        <img src="logo.png" alt="شعار مستشفى برلين">
+        <span>فريق برلين الطبي</span>
+      </div>
+      
+      <div class="sidebar-scroll">
+        <!-- Section Overview -->
+        <div class="sidebar-accordion-section">
+          <button class="accordion-trigger active" id="trigger-overview">
+            <i class="fa-solid fa-hospital-user"></i>
+            <span>سجل الساعات</span>
+            <i class="fa-solid fa-chevron-left arrow-icon"></i>
+          </button>
+          <div class="accordion-content expanded" id="content-overview">
+            <a href="#" class="sidebar-menu-subitem active" onclick="location.reload(); return false;">
+              <i class="fa-solid fa-clock-rotate-left"></i> تفصيل الساعات والأنشطة
+            </a>
+          </div>
+        </div>
+
+        <!-- Section Navigation Links -->
+        <div class="sidebar-accordion-section">
+          <button class="accordion-trigger" id="trigger-nav">
+            <i class="fa-solid fa-link"></i>
+            <span>روابط سريعة</span>
+            <i class="fa-solid fa-chevron-left arrow-icon"></i>
+          </button>
+          <div class="accordion-content" id="content-nav">
+            <a href="dashboard.html" class="sidebar-menu-subitem">
+              <i class="fa-solid fa-user-injured"></i> لوحة المتطوع
+            </a>
+            <a href="index.html" class="sidebar-menu-subitem">
+              <i class="fa-solid fa-house-medical"></i> الموقع الرئيسي
+            </a>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ===== Main Content Wrapper ===== -->
+    <div class="main-content-wrapper">
+      
+      <!-- Top Navbar -->
+      <nav class="top-nav">
+        <div class="top-nav-left">
+          <button class="nav-toggle-btn" id="sidebarToggle" aria-label="تبديل القائمة">
+            <i class="fa-solid fa-bars-staggered"></i>
+          </button>
+          <div class="org-badge">
+            <i class="fa-solid fa-clock" style="color:var(--primary);"></i>
+            <span>كشوفات وسجل ساعات الأعضاء المعتمدة</span>
+          </div>
+        </div>
+        
+        <div class="top-nav-right">
+          <div class="nav-actions-group">
+            <button class="nav-action-btn" title="تغيير الاتجاه LTR/RTL" onclick="window.toggleDirection()">
+              <i class="fa-solid fa-language"></i>
+            </button>
+          </div>
+          <div class="menu-divider" style="width:1px; height:24px; background:var(--border); margin:0 8px;"></div>
+          <a href="dashboard.html" class="btn-hms btn-secondary btn-sm">
+            <i class="fa-solid fa-chevron-left"></i> العودة للوحة المتطوع
+          </a>
+        </div>
+      </nav>
+
+      <!-- Page Content -->
+      <main class="page-container">
+        
+        <div class="grid-container">
+          <!-- KPI Summary Card -->
+          <div class="col-4 col-lg-12">
+            <div class="hms-card" style="text-align:center; padding:var(--space-xl); border-right:5px solid var(--success);">
+              <h2 style="font-size:1rem; color:var(--text-secondary); margin-bottom:12px; font-weight:700;">إجمالي الساعات التطوعية المعتمدة</h2>
+              <span class="font-en" id="totalHours" style="font-size:4rem; font-weight:900; color:var(--success); line-height:1;">0</span>
+              <p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;">ساعة تطوعية معتمدة رسمياً وموثقة بالنظام السحابي</p>
+            </div>
+          </div>
+          
+          <!-- Detailed Ledger Section -->
+          <div class="col-8 col-lg-12">
+            <div class="hms-section">
+              <h2 class="hms-section-title"><i class="fa-solid fa-clock-rotate-left"></i> كشف تفصيل الساعات وإيداع المبادرات الميدانية</h2>
+              
+              <div class="table-controls">
+                <div class="table-search-box" style="width:100%;">
+                  <input type="text" id="searchLogInput" class="table-search-input" placeholder="ابحث عن اسم مبادرة أو فرصة معينة..." onkeyup="window.filterHoursTable()">
+                  <i class="fa-solid fa-magnifying-glass" style="position:absolute; top:50%; left:12px; transform:translateY(-50%); color:var(--text-muted);"></i>
+                </div>
+              </div>
+
+              <div class="users-table-wrapper">
+                <table class="users-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 50%;">اسم المبادرة / الفعالية الطبية</th>
+                      <th style="width: 25%;">الساعات المودعة</th>
+                      <th style="width: 25%;">تاريخ الإعتماد</th>
+                    </tr>
+                  </thead>
+                  <tbody id="hoursTableBody">
+                    <tr>
+                      <td colspan="3" style="color:var(--text-muted); text-align:center; padding:20px;">جاري تحميل سجل الساعات من السحابة...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+      
+      <!-- Footer -->
+      <footer style="margin-top:auto; padding:24px; text-align:center; border-top:1px solid var(--border); background:var(--surface); font-size:0.85rem; color:var(--text-secondary);">
+        <p>© 2026 فريق برلين الطبي التطوعي. كافة الحقوق محفوظة لسجلات الساعات المعتمدة.</p>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Float Theme Switcher -->
+  <button id="themeToggle" class="theme-toggle-btn" aria-label="تبديل الثيم"><i class="fa-solid fa-sun"></i></button>
+
+  <!-- Firebase Compat Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAObqy7xz2BFlSCEJED7ZjWgPwyM5fQOqU",
+      authDomain: "berlinteamapp.firebaseapp.com",
+      projectId: "berlinteamapp",
+      storageBucket: "berlinteamapp.appspot.com",
+      messagingSenderId: "986675866046",
+      appId: "1:986675866046:web:15bb3e179762e5aef0f1ef"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // Firebase Polyfills
+    const doc = (dbRef, col, id) => dbRef.collection(col).doc(id);
+    const wrapDoc = (docSnap) => {
+      if (!docSnap) return docSnap;
+      return {
+        exists() { return docSnap.exists; },
+        data() { return docSnap.data(); }
+      };
+    };
+    const getDoc = async (docRef) => wrapDoc(await docRef.get());
+    const onAuthStateChanged = (authRef, callback) => authRef.onAuthStateChanged(callback);
+
+    window.filterHoursTable = function() {
+      const searchVal = document.getElementById("searchLogInput").value.toLowerCase().trim();
+      const tbody = document.getElementById("hoursTableBody");
+      const rows = tbody.getElementsByTagName("tr");
+      for (let i = 0; i < rows.length; i++) {
+        const nameCell = rows[i].getElementsByTagName("td")[0];
+        if (nameCell && rows[i].getElementsByTagName("td").length > 1) {
+          const text = nameCell.textContent || nameCell.innerText;
+          rows[i].style.display = text.toLowerCase().indexOf(searchVal) > -1 ? "" : "none";
+        }
+      }
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { window.location.href = "login.html"; return; }
+      document.body.style.display = '';
+
+      const email = user.email.toLowerCase();
+      try {
+        const userSnap = await getDoc(doc(db, "users", email));
+        if (userSnap.exists()) {
+          const u = userSnap.data();
+          const totalHours = Number(u.hours) || 0;
+          document.getElementById("totalHours").innerText = totalHours;
+
+          const tbody = document.getElementById("hoursTableBody");
+          tbody.innerHTML = "";
+
+          if (u.hoursLog && u.hoursLog.length > 0) {
+            u.hoursLog.forEach(log => {
+              tbody.innerHTML += `<tr>
+                <td style="text-align: right; font-weight: 700;">${log.initiative}</td>
+                <td><span class="badge badge-success font-en">+${log.hours} Hrs</span></td>
+                <td><span class="font-en" style="color:var(--text-muted); font-size:0.82rem;">${log.date || 'معتمد'}</span></td>
+              </tr>`;
+            });
+          } else {
+            tbody.innerHTML = `<tr>
+              <td colspan="3" style="color: var(--text-muted); text-align:center; padding: 24px;">لا توجد سجلات تفصيلية معتمدة حالياً.</td>
+            </tr>`;
+          }
+        } else {
+          alert("ملف الحساب غير موجود.");
+          window.location.href = "login.html";
+        }
+      } catch (error) {
+        console.error("Error loading hours details:", error);
+        document.getElementById("hoursTableBody").innerHTML = `<tr>
+          <td colspan="3" style="color: var(--danger); text-align:center; padding: 24px;">حدث خطأ أثناء تحميل البيانات.</td>
+        </tr>`;
+      }
+    });
+
+    // Sidebar Toggling
+    window.toggleSidebar = function() {
+      const layout = document.querySelector('.admin-layout');
+      const sidebar = document.getElementById('adminSidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      if (window.innerWidth >= 992) {
+        layout.classList.toggle('sidebar-collapsed');
+      } else {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('show');
+      }
+    };
+    document.getElementById('sidebarToggle').addEventListener('click', window.toggleSidebar);
+
+    // Direction layout swapper
+    window.toggleDirection = function() {
+      const htmlDir = document.documentElement.getAttribute('dir');
+      if (htmlDir === 'rtl') {
+        document.documentElement.setAttribute('dir', 'ltr');
+        document.documentElement.style.textAlign = 'left';
+      } else {
+        document.documentElement.setAttribute('dir', 'rtl');
+        document.documentElement.style.textAlign = '';
+      }
+    };
+  </script>
+</body>
+</html>

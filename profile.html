@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إعدادات الملف الشخصي — مستشفى برلين التطوعي</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="theme.js"></script>
+  <style>
+    .profile-card-premium {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-xl);
+      box-shadow: var(--shadow-sm);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body style="display:none;">
+
+  <div class="admin-layout">
+    
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="window.toggleSidebar()"></div>
+
+    <!-- ===== Collapsible Sidebar ===== -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="sidebar-brand">
+        <img src="logo.png" alt="شعار مستشفى برلين">
+        <span>فريق برلين الطبي</span>
+      </div>
+      
+      <div class="sidebar-scroll">
+        <!-- Section Profile -->
+        <div class="sidebar-accordion-section">
+          <button class="accordion-trigger active" id="trigger-overview">
+            <i class="fa-solid fa-user-gear"></i>
+            <span>الملف الشخصي</span>
+            <i class="fa-solid fa-chevron-left arrow-icon"></i>
+          </button>
+          <div class="accordion-content expanded" id="content-overview">
+            <a href="#" class="sidebar-menu-subitem active" onclick="location.reload(); return false;">
+              <i class="fa-solid fa-id-card"></i> تعديل بياناتي الشخصية
+            </a>
+          </div>
+        </div>
+
+        <!-- Section Navigation Links -->
+        <div class="sidebar-accordion-section">
+          <button class="accordion-trigger" id="trigger-nav">
+            <i class="fa-solid fa-link"></i>
+            <span>روابط سريعة</span>
+            <i class="fa-solid fa-chevron-left arrow-icon"></i>
+          </button>
+          <div class="accordion-content" id="content-nav">
+            <a href="dashboard.html" class="sidebar-menu-subitem">
+              <i class="fa-solid fa-user-injured"></i> لوحة المتطوع
+            </a>
+            <a href="index.html" class="sidebar-menu-subitem">
+              <i class="fa-solid fa-house-medical"></i> الموقع الرئيسي
+            </a>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ===== Main Content Wrapper ===== -->
+    <div class="main-content-wrapper">
+      
+      <!-- Top Navbar -->
+      <nav class="top-nav">
+        <div class="top-nav-left">
+          <button class="nav-toggle-btn" id="sidebarToggle" aria-label="تبديل القائمة">
+            <i class="fa-solid fa-bars-staggered"></i>
+          </button>
+          <div class="org-badge">
+            <i class="fa-solid fa-user-gear" style="color:var(--primary);"></i>
+            <span>إعدادات حسابي والملف الشخصي</span>
+          </div>
+        </div>
+        
+        <div class="top-nav-right">
+          <div class="nav-actions-group">
+            <button class="nav-action-btn" title="تغيير الاتجاه LTR/RTL" onclick="window.toggleDirection()">
+              <i class="fa-solid fa-language"></i>
+            </button>
+          </div>
+          <div class="menu-divider" style="width:1px; height:24px; background:var(--border); margin:0 8px;"></div>
+          <a href="dashboard.html" class="btn-hms btn-secondary btn-sm">
+            <i class="fa-solid fa-chevron-left"></i> العودة للوحة المتطوع
+          </a>
+        </div>
+      </nav>
+
+      <!-- Page Content -->
+      <main class="page-container">
+        
+        <div class="profile-card-premium">
+          <h2 class="hms-section-title" style="border-bottom: 1px solid var(--border); padding-bottom:12px; margin-bottom: 24px;">
+            <i class="fa-solid fa-id-card"></i> تحديث البيانات الشخصية
+          </h2>
+
+          <div class="form-group">
+            <label for="profName">الاسم الرباعي الكامل</label>
+            <input type="text" id="profName" class="form-control" placeholder="الاسم الرباعي المعتمد بالهوية">
+          </div>
+
+          <div class="form-group">
+            <label for="profEmail">البريد الإلكتروني (غير قابل للتعديل)</label>
+            <input type="email" id="profEmail" class="form-control font-en" readonly>
+          </div>
+
+          <div class="form-group">
+            <label for="profPhone">رقم الجوال الشخصي</label>
+            <input type="tel" id="profPhone" class="form-control font-en" placeholder="05XXXXXXXX">
+          </div>
+
+          <div class="form-group">
+            <label for="profDob">تاريخ الميلاد</label>
+            <input type="date" id="profDob" class="form-control font-en">
+          </div>
+
+          <div class="form-group" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
+            <label for="profPassword">تغيير كلمة المرور السرية</label>
+            <input type="password" id="profPassword" class="form-control" placeholder="أدخل كلمة مرور جديدة (6 أحرف على الأقل) أو اتركها فارغة">
+          </div>
+
+          <button class="btn-hms btn-primary" onclick="window.saveProfile()" style="width:100%; padding:12px; margin-top:10px;">
+            <i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات وتحديث الملف
+          </button>
+
+          <p id="profMsg" style="font-size:0.85rem; font-weight:700; min-height:24px; margin-top: 16px; text-align:center;"></p>
+        </div>
+
+      </main>
+      
+      <!-- Footer -->
+      <footer style="margin-top:auto; padding:24px; text-align:center; border-top:1px solid var(--border); background:var(--surface); font-size:0.85rem; color:var(--text-secondary);">
+        <p>© 2026 فريق برلين الطبي التطوعي. كافة الحقوق محفوظة لخدمات الحساب الشخصي.</p>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Float Theme Switcher -->
+  <button id="themeToggle" class="theme-toggle-btn" aria-label="تبديل الثيم"><i class="fa-solid fa-sun"></i></button>
+
+  <!-- Firebase Compat Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAObqy7xz2BFlSCEJED7ZjWgPwyM5fQOqU",
+      authDomain: "berlinteamapp.firebaseapp.com",
+      projectId: "berlinteamapp",
+      storageBucket: "berlinteamapp.appspot.com",
+      messagingSenderId: "986675866046",
+      appId: "1:986675866046:web:15bb3e179762e5aef0f1ef"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // Firebase Polyfills
+    const doc = (dbRef, col, id) => dbRef.collection(col).doc(id);
+    const wrapDoc = (docSnap) => {
+      if (!docSnap) return docSnap;
+      return {
+        exists() { return docSnap.exists; },
+        data() { return docSnap.data(); }
+      };
+    };
+    const getDoc = async (docRef) => wrapDoc(await docRef.get());
+    const updateDoc = (docRef, data) => docRef.update(data);
+    const onAuthStateChanged = (authRef, callback) => authRef.onAuthStateChanged(callback);
+    const updatePassword = (user, newPassword) => user.updatePassword(newPassword);
+
+    let currentUserEmail = "";
+
+    window.saveProfile = async function() {
+      const newName = document.getElementById('profName').value.trim();
+      const newPhone = document.getElementById('profPhone').value.trim();
+      const newDob = document.getElementById('profDob').value;
+      const newPass = document.getElementById('profPassword').value;
+      const msg = document.getElementById('profMsg');
+
+      msg.style.display = 'block';
+      msg.style.color = "var(--text-secondary)";
+      msg.innerText = "جاري تحديث البيانات...";
+
+      if (!newName || !newPhone) {
+        msg.style.color = "var(--danger)";
+        msg.innerText = "الاسم ورقم الجوال مطلوبان.";
+        return;
+      }
+
+      try {
+        await updateDoc(doc(db, "users", currentUserEmail), { name: newName, phone: newPhone, dob: newDob });
+        if (newPass) {
+          if (newPass.length < 6) {
+            msg.style.color = "var(--danger)";
+            msg.innerText = "كلمة المرور يجب أن تكون 6 أحرف على الأقل.";
+            return;
+          }
+          await updatePassword(auth.currentUser, newPass);
+        }
+        msg.style.color = "var(--success)";
+        msg.innerHTML = '<i class="fa-solid fa-circle-check"></i> تم حفظ التعديلات بنجاح!';
+        document.getElementById('profPassword').value = "";
+      } catch (error) {
+        console.error("Error updating profile:", error);
+        msg.style.color = "var(--danger)";
+        if (error.code === 'auth/requires-recent-login') {
+          msg.innerText = "تغيير كلمة المرور يتطلب إعادة تسجيل الدخول لتأكيد الهوية.";
+        } else {
+          msg.innerText = "حدث خطأ أثناء حفظ التعديلات.";
+        }
+      }
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { window.location.href = "login.html"; return; }
+      document.body.style.display = '';
+
+      currentUserEmail = user.email.toLowerCase();
+      try {
+        const userSnap = await getDoc(doc(db, "users", currentUserEmail));
+        if (userSnap.exists()) {
+          const u = userSnap.data();
+          document.getElementById('profName').value = u.name || "";
+          document.getElementById('profEmail').value = currentUserEmail || "";
+          document.getElementById('profPhone').value = u.phone || "";
+          document.getElementById('profDob').value = u.dob || "";
+        } else {
+          alert("ملف الحساب غير موجود.");
+          window.location.href = "login.html";
+        }
+      } catch (error) {
+        console.error("Error loading user profile details:", error);
+        document.getElementById('profMsg').style.color = "var(--danger)";
+        document.getElementById('profMsg').innerText = "حدث خطأ في تحميل بيانات حسابك.";
+      }
+    });
+
+    // Sidebar toggles
+    window.toggleSidebar = function() {
+      const layout = document.querySelector('.admin-layout');
+      const sidebar = document.getElementById('adminSidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      if (window.innerWidth >= 992) {
+        layout.classList.toggle('sidebar-collapsed');
+      } else {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('show');
+      }
+    };
+    document.getElementById('sidebarToggle').addEventListener('click', window.toggleSidebar);
+
+    // Direction layout swapper
+    window.toggleDirection = function() {
+      const htmlDir = document.documentElement.getAttribute('dir');
+      if (htmlDir === 'rtl') {
+        document.documentElement.setAttribute('dir', 'ltr');
+        document.documentElement.style.textAlign = 'left';
+      } else {
+        document.documentElement.setAttribute('dir', 'rtl');
+        document.documentElement.style.textAlign = '';
+      }
+    };
+  </script>
+</body>
+</html>

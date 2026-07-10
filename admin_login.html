@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>دخول الإدارة والقادة — فريق برلين التطوعي</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="theme.js"></script>
+  <style>
+    .auth-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: var(--space-md);
+      position: relative;
+      z-index: 1;
+    }
+    .auth-card-premium {
+      width: 100%;
+      max-width: 440px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-top: 4px solid var(--warning);
+      border-radius: var(--radius-xl);
+      padding: var(--space-xl);
+      box-shadow: var(--shadow-xl);
+      animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    .auth-logo-premium {
+      text-align: center;
+      margin-bottom: var(--space-lg);
+    }
+    .auth-logo-premium img {
+      width: 72px;
+      height: 72px;
+      border-radius: var(--radius-md);
+      margin: 0 auto var(--space-sm);
+      display: block;
+      border: 2px solid var(--warning);
+      box-shadow: var(--shadow-md);
+    }
+    .auth-logo-premium h2 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .auth-logo-premium p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .admin-badge-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: var(--warning-light);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: var(--radius-md);
+      padding: 10px 16px;
+      margin-bottom: var(--space-lg);
+    }
+    .admin-badge-row span {
+      color: var(--warning);
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .auth-message {
+      font-size: 0.85rem;
+      font-weight: 700;
+      min-height: 24px;
+      margin-top: 14px;
+      text-align: center;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      display: none;
+    }
+  </style>
+</head>
+<body class="auth-page-bg">
+
+  <div class="auth-container">
+    <div class="auth-card-premium">
+      <div class="auth-logo-premium">
+        <img src="logo.png" alt="شعار فريق برلين">
+        <h2>بوابة الإدارة والقادة</h2>
+        <p>الرجاء إدخال بيانات الاعتماد الخاصة بك</p>
+      </div>
+
+      <div class="admin-badge-row">
+        <span><i class="fa-solid fa-shield-halved"></i></span>
+        <span>وصول مقيّد للقادة والإداريين فقط</span>
+      </div>
+
+      <div class="form-group form-group-with-icon">
+        <label for="email">البريد الإلكتروني الإداري</label>
+        <div class="form-control-wrapper">
+          <input type="email" id="email" class="form-control" placeholder="admin@example.com" required autocomplete="email">
+          <i class="fa-solid fa-envelope form-control-icon"></i>
+        </div>
+      </div>
+
+      <div class="form-group form-group-with-icon">
+        <label for="password">كلمة المرور السرية</label>
+        <div class="form-control-wrapper">
+          <input type="password" id="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+          <i class="fa-solid fa-lock form-control-icon"></i>
+        </div>
+      </div>
+
+      <button id="loginBtn" class="btn-hms btn-warning" style="width: 100%; padding: 12px; margin-top: 10px;">
+        <i class="fa-solid fa-lock"></i> دخول آمن للأنظمة
+      </button>
+
+      <div id="message" class="auth-message"></div>
+
+      <div class="auth-links" style="margin-top: var(--space-lg);">
+        <a href="gateway.html" style="color: var(--text-secondary);"><i class="fa-solid fa-chevron-right"></i> العودة للبوابة الموحدة</a>
+      </div>
+    </div>
+  </div>
+
+  <button id="themeToggle" class="theme-toggle-btn" aria-label="تبديل الثيم"><i class="fa-solid fa-sun"></i></button>
+
+  <!-- Firebase Compat Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAObqy7xz2BFlSCEJED7ZjWgPwyM5fQOqU",
+      authDomain: "berlinteamapp.firebaseapp.com",
+      projectId: "berlinteamapp",
+      storageBucket: "berlinteamapp.appspot.com",
+      messagingSenderId: "986675866046",
+      appId: "1:986675866046:web:15bb3e179762e5aef0f1ef"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    document.getElementById("loginBtn").addEventListener("click", () => {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const message = document.getElementById('message');
+
+      message.style.display = 'block';
+      message.style.background = '';
+      message.style.color = '';
+      message.innerText = "";
+
+      if (!email || !password) {
+        message.style.background = 'var(--danger-light)';
+        message.style.color = 'var(--danger)';
+        message.innerText = "يرجى تعبئة جميع الحقول.";
+        return;
+      }
+
+      message.style.background = 'var(--warning-light)';
+      message.style.color = 'var(--warning)';
+      message.innerText = "جاري التحقق من الصلاحيات الإدارية...";
+
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          message.style.background = 'var(--success-light)';
+          message.style.color = 'var(--success)';
+          message.innerHTML = '<i class="fa-solid fa-circle-check"></i> تم التحقق بنجاح! جارٍ توجيهك للوحة القيادة...';
+          setTimeout(() => { window.location.href = "admin.html"; }, 1000);
+        })
+        .catch((error) => {
+          message.style.background = 'var(--danger-light)';
+          message.style.color = 'var(--danger)';
+          message.innerText = "صلاحيات غير صالحة أو خطأ في البيانات المكتوبة.";
+          console.error(error);
+        });
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("loginBtn").click();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة المتطوع — مستشفى برلين التطوعي</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="theme.js"></script>
+  <style>
+    /* Volunteer specific overrides */
+    .volunteer-card {
+      text-align: center;
+      padding: var(--space-xl) var(--space-md);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .volunteer-card .kpi-card-icon {
+      width: 54px;
+      height: 54px;
+      font-size: 1.6rem;
+      border-radius: 50%;
+      margin-bottom: var(--space-md);
+    }
+    .volunteer-card h3 {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+    .volunteer-card p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .volunteer-card .hours-big {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: var(--primary);
+      font-family: var(--font-display);
+      margin: 8px 0;
+    }
+    .initiative-item {
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--space-md);
+      margin-bottom: var(--space-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all var(--transition-fast);
+    }
+    .initiative-item:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+    .init-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .init-name {
+      font-weight: 800;
+      font-size: 0.98rem;
+      color: var(--text-primary);
+    }
+    .init-meta {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 4px;
+    }
+    .init-meta span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .init-roles {
+      font-size: 0.82rem;
+      color: var(--primary);
+      font-weight: 700;
+    }
+    .init-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .ann-banner-vol {
+      background: var(--danger-light);
+      border: 1.5px solid rgba(239, 68, 68, 0.2);
+      border-right: 5px solid var(--danger);
+      color: var(--text-primary);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: none;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: var(--space-lg);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading Authentication Overlay -->
+  <div id="authLoadingOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--background); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--text-primary); font-family: var(--font-primary);">
+    <div style="font-size: 3.5rem; color: var(--primary); margin-bottom: var(--space-md); animation: spin 1.2s linear infinite;"><i class="fa-solid fa-spinner"></i></div>
+    <h3 style="font-weight: 800; font-size: 1.25rem;">جاري التحقق من هوية المتطوع والربط الآمن...</h3>
+    <style>
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+  </div>
+
+  <div class="admin-layout">
+    
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="window.toggleSidebar()"></div>
+
+    <!-- ===== Collapsible Sidebar ===== -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="sidebar-brand">
+        <img src="logo.png" alt="شعار مستشفى برلين">
+        <span>فريق برلين الطبي</span>
+      </div>
+      
+      <div class="sidebar-scroll">
+        <!-- Section Overview -->
+        <div class="sidebar-accordion-section">
+          <button class="accordion-trigger active" id="trigger-overview">
+            <i class="fa-solid fa-user-injured"></i>
+            <span>لوحة المتطوع</span>
+            <i class="fa-solid fa-chevron-left arrow-icon"></i>
+          </button>
+          <div class="accordion-content expanded" id="content-overview">
+            <a href="#" class="sidebar-menu-subitem active" onclick="location.reload(); return false;">
+              <i class="fa-solid fa-gauge"></i> الرئيسية والمؤشرات
+            </a>
+          </div>
+        </div>
+
+        <!-- Section Utilities -->
+        <div class="sidebar-accordion-section">
+          <button class="accordion-trigger" id="trigger-utils">
+            <i class="fa-solid fa-hospital-user"></i>
+            <span>التمكين والشهادات</span>
+            <i class="fa-solid fa-chevron-left arrow-icon"></i>
+          </button>
+          <div class="accordion-content" id="content-utils">
+            <a href="#" class="sidebar-menu-subitem" onclick="window.openHoursModal(); return false;">
+              <i class="fa-solid fa-clock"></i> سجل الساعات بالتفصيل
+            </a>
+            <a href="certificates.html" class="sidebar-menu-subitem">
+              <i class="fa-solid fa-graduation-cap"></i> شهادات التقدير والاعتماد
+            </a>
+          </div>
+        </div>
+
+        <!-- Section Navigation Links -->
+        <div class="sidebar-accordion-section">
+          <button class="accordion-trigger" id="trigger-nav">
+            <i class="fa-solid fa-link"></i>
+            <span>روابط البوابة</span>
+            <i class="fa-solid fa-chevron-left arrow-icon"></i>
+          </button>
+          <div class="accordion-content" id="content-nav">
+            <a href="index.html" class="sidebar-menu-subitem">
+              <i class="fa-solid fa-house-medical"></i> الموقع الرئيسي
+            </a>
+            <a href="#" class="sidebar-menu-subitem" onclick="window.openProfileModal(); return false;">
+              <i class="fa-solid fa-user-gear"></i> إعدادات حسابي الشخصي
+            </a>
+            <a href="#" class="sidebar-menu-subitem" onclick="window.openSupportModal(); return false;">
+              <i class="fa-solid fa-comment-medical"></i> الدعم الفني والمساعدة
+            </a>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ===== Main Content Wrapper ===== -->
+    <div class="main-content-wrapper">
+      
+      <!-- Top Navbar -->
+      <nav class="top-nav">
+        <div class="top-nav-left">
+          <button class="nav-toggle-btn" id="sidebarToggle" aria-label="تبديل القائمة">
+            <i class="fa-solid fa-bars-staggered"></i>
+          </button>
+          <div class="org-badge">
+            <i class="fa-solid fa-heart-pulse"></i>
+            <span>فريق برلين الطبي الموحد</span>
+          </div>
+        </div>
+        
+        <div class="top-nav-right">
+          <div class="nav-actions-group">
+            <button class="nav-action-btn" title="تنبيهات النظام">
+              <i class="fa-solid fa-bell"></i>
+              <span class="badge-dot"></span>
+            </button>
+            <button class="nav-action-btn" title="تغيير الاتجاه LTR/RTL" onclick="window.toggleDirection()">
+              <i class="fa-solid fa-language"></i>
+            </button>
+          </div>
+          
+          <div class="menu-divider" style="width:1px; height:24px; background:var(--border); margin:0 8px;"></div>
+          
+          <!-- Profile drop card -->
+          <div class="nav-user-profile" id="userProfileDrop">
+            <div class="user-avatar" id="navAvatarInitials"><i class="fa-solid fa-user"></i></div>
+            <div class="user-details">
+              <span class="username" style="max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">تحميل...</span>
+              <span class="user-role">متطوع بالمنصة</span>
+            </div>
+            <i class="fa-solid fa-chevron-down" style="font-size:0.72rem; color:var(--text-muted); margin-right:4px;"></i>
+            
+            <!-- Dropdown Menu -->
+            <div class="nav-dropdown-menu" id="profileDropdown">
+              <a href="#" onclick="window.openProfileModal(); return false;"><i class="fa-solid fa-user-gear"></i> إعدادات حسابي</a>
+              <a href="#" onclick="window.openHoursModal(); return false;"><i class="fa-solid fa-clock"></i> سجل الساعات</a>
+              <div class="menu-divider"></div>
+              <button id="logoutBtn" class="logout-item"><i class="fa-solid fa-power-off"></i> تسجيل الخروج</button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Page Content -->
+      <main class="page-container">
+        
+        <header class="page-header">
+          <div class="page-title-group">
+            <h1>بوابة تحكم المتطوعين</h1>
+            <p id="welcomeName" style="font-weight:600; color:var(--text-secondary); margin-top:4px;">جاري تحميل الاسم الشخصي والبيانات...</p>
+          </div>
+        </header>
+
+        <!-- Dynamic Admin Announcements Banner -->
+        <div id="announcementBanner" class="ann-banner-vol">
+          <div class="kpi-card-icon" style="background:var(--danger-light); color:var(--danger); border-radius:50%; flex-shrink:0;">
+            <i class="fa-solid fa-bullhorn"></i>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:0.82rem; font-weight:700; color:var(--danger); margin-bottom:2px;">بيان إداري عاجل من الأمانة العامة:</div>
+            <div id="announcementText" style="font-size:0.9rem; line-height:1.6; font-weight:600;">جاري التحميل...</div>
+          </div>
+        </div>
+
+        <!-- 12-Column Responsive Dashboard widgets -->
+        <div class="grid-container" style="margin-bottom: var(--space-lg);">
+          <!-- Widget 1: Hours -->
+          <div class="col-4 col-lg-6 col-sm-12">
+            <div class="hms-card volunteer-card" onclick="window.openHoursModal()">
+              <div class="kpi-card-icon"><i class="fa-solid fa-clock"></i></div>
+              <h3>ساعاتي التطوعية</h3>
+              <div class="hours-big" id="hours">تحميل...</div>
+              <p>اضغط لاستعراض التفاصيل الكاملة والسجل</p>
+            </div>
+          </div>
+
+          <!-- Widget 2: Certificates -->
+          <div class="col-4 col-lg-6 col-sm-12">
+            <a href="certificates.html" class="hms-card volunteer-card">
+              <div class="kpi-card-icon" style="background:var(--success-light); color:var(--success);"><i class="fa-solid fa-graduation-cap"></i></div>
+              <h3>الشهادات والاعتمادات</h3>
+              <div class="hours-big" style="color:var(--success);"><i class="fa-solid fa-file-shield"></i></div>
+              <p id="certNoteText" style="min-height:36px; display:flex; align-items:center; justify-content:center;">جاري استرداد الملاحظات والملفات...</p>
+            </a>
+          </div>
+
+          <!-- Widget 3: Library/Guides -->
+          <div class="col-4 col-lg-12 col-sm-12">
+            <a href="#" id="guideCardLink" class="hms-card volunteer-card" target="_blank" onclick="window.checkGuideLink(event)">
+              <div class="kpi-card-icon" style="background:var(--accent-light); color:var(--accent);"><i class="fa-solid fa-book-medical"></i></div>
+              <h3>الحقيبة والأدلة التدريبية</h3>
+              <div class="hours-big" style="color:var(--accent);"><i class="fa-solid fa-book-open"></i></div>
+              <p>أدلة وملفات التمكين الإداري والتنظيمي المعتمدة</p>
+            </a>
+          </div>
+        </div>
+
+        <!-- Section department application -->
+        <div class="hms-card dept-card" onclick="window.openDeptAppModal()" style="margin-bottom: var(--space-lg); cursor:pointer;">
+          <div style="display:flex; align-items:center; gap:16px;">
+            <div class="kpi-card-icon" style="background:var(--warning-light); color:var(--warning); width:54px; height:54px; font-size:1.6rem; border-radius:50%; flex-shrink:0;">
+              <i class="fa-solid fa-clipboard-list"></i>
+            </div>
+            <div>
+              <h3 style="color:var(--warning); font-size:1.1rem; font-weight:800;">التسجيل في اللجان والأقسام التنفيذية</h3>
+              <p style="color:var(--text-secondary); font-size:0.88rem; margin-top:4px;">
+                تقدم بطلب الانضمام كعضو أو كادر إداري في أحد لجان الفريق (القسم الصحي، التنظيمي، الإعلامي، التسويقي، العلمي، التصميم، أو القانوني).
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active opportunities -->
+        <div class="hms-section">
+          <h2 class="hms-section-title"><i class="fa-solid fa-rocket"></i> الفرص الطبية والتطوعية المتاحة (التسجيل واختيار المهام)</h2>
+          <div id="initiativesContainer">
+            <div class="empty-state-wrapper">
+              <div class="empty-state-icon"><i class="fa-solid fa-hand-holding-hand"></i></div>
+              <div class="empty-state-title">جاري البحث عن مبادرات نشطة...</div>
+              <div class="empty-state-desc">يرجى الانتظار بينما نبحث عن الفرص المتاحة حالياً بالنظام الطبي.</div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+      <!-- Footer -->
+      <footer style="margin-top:auto; padding:24px; text-align:center; border-top:1px solid var(--border); background:var(--surface); font-size:0.85rem; color:var(--text-secondary);">
+        <p>© 2026 فريق برلين الطبي التطوعي. كافة الحقوق محفوظة لبوابة المتطوعين.</p>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ===== MODALS & DIALOGS ===== -->
+
+  <!-- Profile Modal -->
+  <div class="modal-overlay" id="profileModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-user-gear"></i> إعدادات حسابي الشخصي</h3>
+        <button class="modal-close-btn" onclick="window.closeModal('profileModal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text-muted); font-size:0.82rem; margin-bottom:14px;">يمكنك تحديث بياناتك الشخصية هنا. (الإيميل ثابت لحفظ سجلاتك).</p>
+        <div class="form-group">
+          <label for="profName">الاسم الرباعي الكامل</label>
+          <input type="text" id="profName" class="form-control">
+        </div>
+        <div class="form-group">
+          <label for="profEmail">البريد الإلكتروني (ثابت)</label>
+          <input type="email" id="profEmail" class="form-control font-en" readonly>
+        </div>
+        <div class="form-group">
+          <label for="profPhone">رقم الجوال الشخصي</label>
+          <input type="tel" id="profPhone" class="form-control font-en">
+        </div>
+        <div class="form-group">
+          <label for="profDob">تاريخ الميلاد</label>
+          <input type="date" id="profDob" class="form-control font-en">
+        </div>
+        <div class="form-group">
+          <label for="profPassword">كلمة المرور الجديدة (اختياري)</label>
+          <input type="password" id="profPassword" class="form-control" placeholder="اتركها فارغة إذا لا ترغب في التغيير">
+        </div>
+        <p id="profMsg" style="font-size:0.82rem; font-weight:700; min-height:18px; text-align:center;"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-hms btn-outline btn-sm" onclick="window.closeModal('profileModal')">إلغاء</button>
+        <button class="btn-hms btn-primary btn-sm" onclick="window.saveProfile()"><i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hours Modal -->
+  <div class="modal-overlay" id="hoursModal">
+    <div class="modal-box" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-clock"></i> سجل الساعات التطوعية المعتمد</h3>
+        <button class="modal-close-btn" onclick="window.closeModal('hoursModal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="users-table-wrapper" style="max-height: 280px; overflow-y: auto;">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>اسم المبادرة / الفعالية</th>
+                <th>الساعات المودعة</th>
+                <th>تاريخ الإيداع</th>
+              </tr>
+            </thead>
+            <tbody id="hoursModalTableBody"></tbody>
+          </table>
+        </div>
+        
+        <div style="margin-top: 16px; font-weight: 700; padding-top: 14px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: var(--text-secondary);">المجموع الكلي للساعات المستحقة:</span>
+          <div>
+            <span id="hoursModalTotal" style="color: var(--primary); font-size: 1.5rem; font-weight: 900; font-family: var(--font-display);">0</span>
+            <span style="color: var(--text-muted); font-size: 0.85rem;">ساعة معتمدة</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-hms btn-outline btn-sm" onclick="window.closeModal('hoursModal')">إغلاق السجل</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Support Modal -->
+  <div class="modal-overlay" id="supportModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-screwdriver-wrench"></i> تقديم بلاغ أو تذكرة مساعدة</h3>
+        <button class="modal-close-btn" onclick="window.closeModal('supportModal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">اكتب المشكلة أو الطلب الخاص بك وسيقوم قادة الفريق بمراجعته والرد فوراً.</p>
+        <div class="form-group">
+          <label for="supportMessageInput">نص الرسالة أو البلاغ</label>
+          <textarea id="supportMessageInput" class="form-control" rows="4" placeholder="يرجى كتابة الشكوى أو طلب المساعدة الفنية هنا..." required></textarea>
+        </div>
+        <p id="supportMsgStatus" style="font-size:0.82rem; font-weight:700; min-height:18px; text-align:center;"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-hms btn-outline btn-sm" onclick="window.closeModal('supportModal')">إلغاء</button>
+        <button class="btn-hms btn-primary btn-sm" onclick="window.submitSupport()"><i class="fa-solid fa-paper-plane"></i> إرسال التذكرة</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Withdraw Modal -->
+  <div class="modal-overlay" id="withdrawModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title" style="color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> طلب اعتذار وانسحاب من مبادرة</h3>
+        <button class="modal-close-btn" onclick="window.closeModal('withdrawModal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <h4 id="withdrawInitName" style="font-size:0.95rem; font-weight:800; color:var(--text-primary); margin-bottom:10px;"></h4>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">تنبيه: الانسحاب بدون مبرر رسمي يعوق جداول الحضور الميداني.</p>
+        <div class="form-group">
+          <label for="withdrawExcuseInput">العذر المبرر للانسحاب</label>
+          <textarea id="withdrawExcuseInput" class="form-control" rows="3" placeholder="يرجى ذكر العذر الرسمي ليتم تدقيقه إدارياً..." required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-hms btn-outline btn-sm" onclick="window.closeModal('withdrawModal')">التراجع</button>
+        <button class="btn-hms btn-danger btn-sm" onclick="window.submitWithdraw()"><i class="fa-solid fa-circle-check"></i> تأكيد الانسحاب</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Department Application Modal -->
+  <div class="modal-overlay" id="deptAppModal">
+    <div class="modal-box" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title" style="color: var(--warning);"><i class="fa-solid fa-clipboard-list"></i> طلب انضمام للجان وأقسام الفريق</h3>
+        <button class="modal-close-btn" onclick="window.closeModal('deptAppModal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text-muted); font-size:0.82rem; margin-bottom:14px;">التقديم كعضو يتم قبوله مباشرة، بينما التقديم كإداري يحتاج مراجعة وتدقيق من قائد اللجنة.</p>
+        
+        <div class="grid-container" style="gap: var(--space-sm);">
+          <div class="col-6 col-md-12">
+            <div class="form-group">
+              <label>الاسم الكامل</label>
+              <input type="text" id="deptAppName" class="form-control" readonly>
+            </div>
+          </div>
+          <div class="col-6 col-md-12">
+            <div class="form-group">
+              <label>البريد الإلكتروني</label>
+              <input type="email" id="deptAppEmail" class="form-control font-en" readonly>
+            </div>
+          </div>
+          <div class="col-6 col-md-12">
+            <div class="form-group">
+              <label>رقم الجوال</label>
+              <input type="tel" id="deptAppPhone" class="form-control font-en" placeholder="05XXXXXXXX" required>
+            </div>
+          </div>
+          <div class="col-6 col-md-12">
+            <div class="form-group">
+              <label>رقم الهوية الوطنية / الإقامة</label>
+              <input type="number" id="deptAppNid" class="form-control font-en" placeholder="10 أرقام دقيقة" required>
+            </div>
+          </div>
+          <div class="col-6 col-md-12">
+            <div class="form-group">
+              <label>التخصص المهني أو الأكاديمي</label>
+              <input type="text" id="deptAppMajor" class="form-control" placeholder="مثال: طب بشري، إسعاف، تقنية معلومات" required>
+            </div>
+          </div>
+          <div class="col-6 col-md-12">
+            <div class="form-group">
+              <label>المحافظة / السكن الحالي</label>
+              <input type="text" id="deptAppLocation" class="form-control" placeholder="مثال: جازان - صبيا" required>
+            </div>
+          </div>
+          <div class="col-6 col-md-12">
+            <div class="form-group">
+              <label for="deptAppAge">العمر</label>
+              <select id="deptAppAge" class="form-control font-en">
+                <option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20" selected>20</option>
+                <option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option>
+                <option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option>
+                <option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option>
+                <option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="40">40+</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-6 col-md-12">
+            <div class="form-group">
+              <label for="deptAppType">نوع الانضمام</label>
+              <select id="deptAppType" class="form-control" onchange="window.toggleExpField()">
+                <option value="member">تسجيل كعضو ميداني (مقبول تلقائياً)</option>
+                <option value="admin">تسجيل كإداري بالقسم (خاضع للمراجعة والتقييم)</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="form-group">
+              <label for="deptAppDept">اختر اللجنة أو القسم المطلوب</label>
+              <select id="deptAppDept" class="form-control">
+                <option value="media">القسم الإعلامي وتوثيق الفعاليات</option>
+                <option value="org">القسم التنظيمي وحشود الميدان</option>
+                <option value="health">القسم الصحي وطب الطوارئ</option>
+                <option value="sci">القسم العلمي والأبحاث الطبية</option>
+                <option value="mark">القسم التسويقي وجلب الرعايات</option>
+                <option value="design">قسم التصميم الفني والمونتاج</option>
+                <option value="legal">القسم القانوني والحوكمة الإدارية</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 10px;">
+          <label>المهارات البارزة والتخصصية (اختر ما ينطبق عليك)</label>
+          <div class="custom-checkbox-grid">
+            <label class="custom-checkbox-card"><input type="checkbox" name="deptAppSkill" value="مصمم جرافيك"> <span>تصميم جرافيكي</span></label>
+            <label class="custom-checkbox-card"><input type="checkbox" name="deptAppSkill" value="مصور فوتوغرافي/فيديو"> <span>تصوير وصناعة محتوى</span></label>
+            <label class="custom-checkbox-card"><input type="checkbox" name="deptAppSkill" value="كاتب تقارير ومحتوى"> <span>كتابة تقارير إدارية</span></label>
+            <label class="custom-checkbox-card"><input type="checkbox" name="deptAppSkill" value="متحدث لبق (تقديم وإلقاء)"> <span>تقديم وإلقاء</span></label>
+            <label class="custom-checkbox-card"><input type="checkbox" name="deptAppSkill" value="تنظيم وإدارة حشود"> <span>إدارة حشود وعمليات</span></label>
+            <label class="custom-checkbox-card"><input type="checkbox" id="skillOtherCheckbox" name="deptAppSkill" value="أخرى" onchange="window.toggleOtherSkillField()"> <span>مهارات أخرى</span></label>
+          </div>
+          <input type="text" id="deptAppOtherSkill" class="form-control" placeholder="اكتب تفاصيل مهاراتك الأخرى هنا..." style="display:none; margin-top:10px;">
+        </div>
+
+        <div class="form-group" id="expFieldContainer" style="display:none;">
+          <label for="deptAppExp">الخبرات السابقة والمؤهلات الداعمة (مطلوب لطلب الإداري)</label>
+          <textarea id="deptAppExp" class="form-control" rows="3" placeholder="اذكر هنا اللجان السابقة التي أدرتها ومؤهلاتك القيادية..."></textarea>
+        </div>
+
+        <p id="deptAppMsg" style="font-size:0.82rem; font-weight:700; min-height:18px; text-align:center;"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-hms btn-outline btn-sm" onclick="window.closeModal('deptAppModal')">إلغاء</button>
+        <button class="btn-hms btn-warning btn-sm" onclick="window.submitDeptApp()"><i class="fa-solid fa-paper-plane"></i> تقديم طلب الانضمام</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Registration Modal -->
+  <div class="modal-overlay" id="regModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-circle-check"></i> حجز مقعد في المبادرة</h3>
+        <button class="modal-close-btn" onclick="window.closeModal('regModal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <h4 id="modalInitName" style="font-size:1.05rem; font-weight:800; color:var(--primary); margin-bottom:12px;"></h4>
+        <div class="form-group">
+          <label for="regName">اسم المتطوع</label>
+          <input type="text" id="regName" class="form-control" readonly>
+        </div>
+        <div class="form-group">
+          <label for="regId">تأكيد رقم الهوية الوطنية / الإقامة (للمطابقة الأمنية)</label>
+          <input type="number" id="regId" class="form-control font-en" placeholder="أدخل رقم هويتك للمطابقة الميدانية" required>
+        </div>
+        <div class="form-group">
+          <label style="color: var(--primary); font-weight: 700;">حدد المهام التي تود تأديتها في الفعالية:</label>
+          <p style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 8px;">يمكنك اختيار مهام متعددة لزيادة فرص ترشيحك.</p>
+          <div class="custom-checkbox-grid" id="rolesCheckboxesContainer"></div>
+        </div>
+        <p id="regMsg" style="font-size:0.82rem; font-weight:700; min-height:18px; text-align:center;"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-hms btn-outline btn-sm" onclick="window.closeModal('regModal')">إلغاء</button>
+        <button class="btn-hms btn-primary btn-sm" onclick="window.submitRegistration()"><i class="fa-solid fa-circle-check"></i> تأكيد الحجز والتقديم</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Theme Switcher -->
+  <button id="themeToggle" class="theme-toggle-btn" aria-label="تبديل الثيم"><i class="fa-solid fa-sun"></i></button>
+
+  <!-- Firebase Compat Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script>
+    // Firebase Config init
+    const firebaseConfig = {
+      apiKey: "AIzaSyAObqy7xz2BFlSCEJED7ZjWgPwyM5fQOqU",
+      authDomain: "berlinteamapp.firebaseapp.com",
+      projectId: "berlinteamapp",
+      storageBucket: "berlinteamapp.appspot.com",
+      messagingSenderId: "986675866046",
+      appId: "1:986675866046:web:15bb3e179762e5aef0f1ef"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Firebase polyfills layer
+    const doc = (dbRef, col, id) => dbRef.collection(col).doc(id);
+    const collection = (dbRef, col) => dbRef.collection(col);
+    const wrapDoc = (docSnap) => {
+      if (!docSnap) return docSnap;
+      return {
+        get exists() { return docSnap.exists; },
+        data() { return docSnap.data(); },
+        get id() { return docSnap.id; },
+        get ref() { return docSnap.ref; }
+      };
+    };
+    const wrapQuerySnap = (querySnap) => {
+      if (!querySnap) return querySnap;
+      return {
+        get empty() { return querySnap.empty; },
+        get size() { return querySnap.size; },
+        get docs() { return querySnap.docs.map(d => wrapDoc(d)); },
+        forEach(callback) { querySnap.forEach(d => callback(wrapDoc(d))); }
+      };
+    };
+    const getDoc = async (docRef) => wrapDoc(await docRef.get());
+    const getDocs = async (queryRef) => wrapQuerySnap(await queryRef.get());
+    const updateDoc = (docRef, data) => docRef.update(data);
+    const deleteDoc = (docRef) => docRef.delete();
+    const addDoc = (colRef, data) => colRef.add(data);
+    const query = (colRef, ...constraints) => {
+      let q = colRef;
+      constraints.forEach(c => { if (c && typeof c.applyToQuery === 'function') q = c.applyToQuery(q); });
+      return q;
+    };
+    const where = (field, op, val) => { return { applyToQuery: (q) => q.where(field, op, val) }; };
+    const onAuthStateChanged = (authRef, callback) => authRef.onAuthStateChanged(callback);
+    const signOut = (authRef) => authRef.signOut();
+
+    let userEmail = "";
+    let userFullName = "";
+    let userPhoneNo = "";
+    let isUserLoggedIn = false;
+
+    // Sidebar Toggling logic
+    window.toggleSidebar = function() {
+      const layout = document.querySelector('.admin-layout');
+      const sidebar = document.getElementById('adminSidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      
+      if (window.innerWidth >= 992) {
+        layout.classList.toggle('sidebar-collapsed');
+      } else {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('show');
+      }
+    };
+    document.getElementById('sidebarToggle').addEventListener('click', window.toggleSidebar);
+
+    // Direction layout swapper
+    window.toggleDirection = function() {
+      const htmlDir = document.documentElement.getAttribute('dir');
+      if (htmlDir === 'rtl') {
+        document.documentElement.setAttribute('dir', 'ltr');
+        document.documentElement.style.textAlign = 'left';
+      } else {
+        document.documentElement.setAttribute('dir', 'rtl');
+        document.documentElement.style.textAlign = '';
+      }
+    };
+
+    // User profile dropdown navbar
+    const profileDrop = document.getElementById('userProfileDrop');
+    const profileMenu = document.getElementById('profileDropdown');
+    profileDrop.addEventListener('click', (e) => {
+      e.stopPropagation();
+      profileMenu.classList.toggle('show');
+    });
+    document.addEventListener('click', () => {
+      profileMenu.classList.remove('show');
+    });
+
+    // Accordion inside sidebar
+    const sidebarAccHeaders = document.querySelectorAll('.accordion-trigger');
+    sidebarAccHeaders.forEach(trigger => {
+      trigger.addEventListener('click', () => {
+        const content = trigger.nextElementSibling;
+        const arrow = trigger.querySelector('.arrow-icon');
+        const isCurrentlyExpanded = content.classList.contains('expanded');
+        
+        document.querySelectorAll('.accordion-content').forEach(c => c.classList.remove('expanded'));
+        document.querySelectorAll('.accordion-trigger').forEach(t => t.classList.remove('active'));
+        
+        if (!isCurrentlyExpanded) {
+          content.classList.add('expanded');
+          trigger.classList.add('active');
+        }
+      });
+    });
+
+    // Modals Controls Helper
+    window.openModal = function(id) { document.getElementById(id).style.display = 'flex'; };
+    window.closeModal = function(id) { document.getElementById(id).style.display = 'none'; };
+
+    window.openHoursModal = async function() {
+      window.openModal('hoursModal');
+      const tbody = document.getElementById('hoursModalTableBody');
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">جاري تحميل سجل الساعات...</td></tr>';
+      try {
+        const docRef = db.collection('users').doc(userEmail);
+        const docSnap = await docRef.get();
+        if (docSnap.exists) {
+          const u = docSnap.data();
+          const log = u.hoursLog || [];
+          tbody.innerHTML = '';
+          if (log.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">لا يوجد سجل إيداع ساعات مسجل بحسابك بعد.</td></tr>';
+            document.getElementById('hoursModalTotal').innerText = u.hours || 0;
+            return;
+          }
+          log.forEach(item => {
+            tbody.innerHTML += `<tr>
+              <td><strong>${item.initiative}</strong></td>
+              <td><span class="badge badge-success font-en">+${item.hours} Hrs</span></td>
+              <td><span class="font-en">${item.date}</span></td>
+            </tr>`;
+          });
+          document.getElementById('hoursModalTotal').innerText = u.hours || 0;
+        }
+      } catch (e) {
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--danger);">خطأ في استرداد كشوفات الساعات.</td></tr>';
+      }
+    };
+
+    window.openProfileModal = async function() {
+      window.openModal('profileModal');
+      document.getElementById('profMsg').innerText = '';
+      try {
+        const docRef = db.collection('users').doc(userEmail);
+        const docSnap = await docRef.get();
+        if (docSnap.exists) {
+          const u = docSnap.data();
+          document.getElementById('profName').value = u.name || '';
+          document.getElementById('profEmail').value = userEmail;
+          document.getElementById('profPhone').value = u.phone || '';
+          document.getElementById('profDob').value = u.dob || '';
+          document.getElementById('profPassword').value = '';
+        }
+      } catch (e) { console.error(e); }
+    };
+
+    window.saveProfile = async function() {
+      const name = document.getElementById('profName').value.trim();
+      const phone = document.getElementById('profPhone').value.trim();
+      const dob = document.getElementById('profDob').value;
+      const newPassword = document.getElementById('profPassword').value;
+      const msg = document.getElementById('profMsg');
+      msg.style.color = 'var(--text-secondary)';
+      msg.innerText = 'جاري حفظ التعديلات...';
+
+      if (!name || !phone) {
+        msg.style.color = 'var(--danger)';
+        msg.innerText = 'الاسم ورقم الجوال حقول مطلوبة.';
+        return;
+      }
+
+      try {
+        await db.collection('users').doc(userEmail).update({ name, phone, dob: dob || "" });
+        if (newPassword) {
+          if (newPassword.length < 6) {
+            msg.style.color = 'var(--danger)';
+            msg.innerText = 'يجب أن تكون كلمة المرور 6 أحرف على الأقل.';
+            return;
+          }
+          await auth.currentUser.updatePassword(newPassword);
+        }
+        msg.style.color = 'var(--success)';
+        msg.innerText = 'تم تحديث ملفك الشخصي بنجاح!';
+        document.getElementById('welcomeName').innerText = `أهلاً بك، ${name} 👋`;
+        document.querySelector('.username').innerText = name;
+        setTimeout(() => window.closeModal('profileModal'), 2000);
+      } catch (e) {
+        console.error(e);
+        msg.style.color = 'var(--danger)';
+        msg.innerText = 'فشل تحديث البيانات، يرجى إعادة المحاولة.';
+      }
+    };
+
+    window.openSupportModal = function() {
+      window.openModal('supportModal');
+      document.getElementById('supportMessageInput').value = '';
+      document.getElementById('supportMsgStatus').innerText = '';
+    };
+
+    window.submitSupport = async function() {
+      const msgInput = document.getElementById('supportMessageInput').value.trim();
+      const status = document.getElementById('supportMsgStatus');
+      if (!msgInput) { status.style.color = 'var(--danger)'; status.innerText = 'الرجاء كتابة تفاصيل بلاغك أولاً.'; return; }
+      status.style.color = 'var(--text-secondary)';
+      status.innerText = 'جاري إرسال التذكرة للإدارة...';
+      try {
+        await db.collection('support_tickets').add({
+          name: userFullName,
+          email: userEmail,
+          message: msgInput,
+          timestamp: new Date().toLocaleString('ar-SA')
+        });
+        status.style.color = 'var(--success)';
+        status.innerHTML = '<i class="fa-solid fa-circle-check"></i> تم إرسال تذكرة الدعم بنجاح! سيتم مراجعتها.';
+        setTimeout(() => window.closeModal('supportModal'), 2000);
+      } catch (e) { console.error(e); status.style.color = 'var(--danger)'; status.innerText = 'خطأ بالارسال، حاول لاحقاً.'; }
+    };
+
+    window.openDeptAppModal = function() {
+      window.openModal('deptAppModal');
+      document.getElementById('deptAppName').value = userFullName;
+      document.getElementById('deptAppEmail').value = userEmail;
+      document.getElementById('deptAppPhone').value = userPhoneNo || '';
+      document.getElementById('deptAppMsg').innerText = '';
+      
+      // Pull nationalId if exists
+      db.collection('users').doc(userEmail).get().then(snap => {
+        if (snap.exists) {
+          const u = snap.data();
+          if (u.nationalId) document.getElementById('deptAppNid').value = u.nationalId;
+        }
+      });
+    };
+
+    window.toggleOtherSkillField = function() {
+      const chk = document.getElementById('skillOtherCheckbox');
+      document.getElementById('deptAppOtherSkill').style.display = chk.checked ? 'block' : 'none';
+    };
+
+    window.toggleExpField = function() {
+      const type = document.getElementById('deptAppType').value;
+      document.getElementById('expFieldContainer').style.display = type === 'admin' ? 'block' : 'none';
+    };
+
+    window.submitDeptApp = async function() {
+      const phone = document.getElementById('deptAppPhone').value.trim();
+      const nid = document.getElementById('deptAppNid').value.trim();
+      const major = document.getElementById('deptAppMajor').value.trim();
+      const locationVal = document.getElementById('deptAppLocation').value.trim();
+      const age = document.getElementById('deptAppAge').value;
+      const type = document.getElementById('deptAppType').value;
+      const department = document.getElementById('deptAppDept').value;
+      const exp = document.getElementById('deptAppExp').value.trim();
+      const msg = document.getElementById('deptAppMsg');
+
+      const skillsArr = [];
+      const checkboxes = document.getElementsByName('deptAppSkill');
+      checkboxes.forEach(chk => {
+        if (chk.checked) {
+          if (chk.value === 'أخرى') {
+            const extra = document.getElementById('deptAppOtherSkill').value.trim();
+            if (extra) skillsArr.push(extra);
+          } else {
+            skillsArr.push(chk.value);
+          }
+        }
+      });
+
+      msg.style.color = 'var(--text-secondary)';
+      msg.innerText = 'جاري معالجة طلبك وإرساله...';
+
+      if (!phone || !nid || !major || !locationVal) {
+        msg.style.color = 'var(--danger)';
+        msg.innerText = 'يرجى استكمال كافة الحقول الإلزامية.';
+        return;
+      }
+      if (nid.length !== 10) {
+        msg.style.color = 'var(--danger)';
+        msg.innerText = 'رقم الهوية الوطنية يجب أن يتكون من 10 أرقام.';
+        return;
+      }
+      if (type === 'admin' && !exp) {
+        msg.style.color = 'var(--danger)';
+        msg.innerText = 'يرجى كتابة الخبرات والمؤهلات المطلوبة للمنصب الإداري.';
+        return;
+      }
+
+      try {
+        const payload = {
+          name: userFullName,
+          email: userEmail,
+          phone,
+          nationalId: nid,
+          major,
+          location: locationVal,
+          age,
+          skill: skillsArr.join(' - '),
+          type,
+          department,
+          experience: exp || "",
+          status: type === 'member' ? 'approved' : 'pending',
+          timestamp: new Date().toLocaleString('ar-SA')
+        };
+        
+        await db.collection('department_applications').add(payload);
+        
+        if (type === 'member') {
+          msg.style.color = 'var(--success)';
+          msg.innerHTML = '<i class="fa-solid fa-circle-check"></i> تم اعتماد انضمامك للجنة فوراً بنجاح! مرحباً بك.';
+        } else {
+          msg.style.color = 'var(--success)';
+          msg.innerHTML = '<i class="fa-solid fa-circle-check"></i> تم رفع طلبك الإداري الموجه لقائد القسم بنجاح!';
+        }
+        setTimeout(() => window.closeModal('deptAppModal'), 2500);
+      } catch (e) {
+        console.error(e);
+        msg.style.color = 'var(--danger)';
+        msg.innerText = 'حدث خطأ بالاتصال، يرجى إعادة تقديم الطلب.';
+      }
+    };
+
+    // User session monitor check
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { window.location.href = "gateway.html"; return; }
+      isUserLoggedIn = true;
+      userEmail = user.email.toLowerCase();
+      
+      try {
+        const docRef = db.collection('users').doc(userEmail);
+        const docSnap = await docRef.get();
+        
+        if (docSnap.exists) {
+          const u = docSnap.data();
+          userFullName = u.name;
+          userPhoneNo = u.phone;
+          
+          document.getElementById('welcomeName').innerText = `أهلاً بك، الأستاذ/ة ${u.name} 👋`;
+          document.querySelector('.username').innerText = u.name;
+          document.getElementById('hours').innerText = (u.hours || 0) + " ساعة";
+          
+          // Generate initials
+          const initials = u.name.split(' ').map(n => n[0]).join('').substring(0, 2);
+          document.getElementById("navAvatarInitials").innerText = initials;
+          
+          // Check Blacklist
+          const banSnap = await db.collection('banned_ids').doc(u.nationalId || 'none').get();
+          if (banSnap.exists) {
+            alert(`حساب موقوف: تم إيقاف وحظر هويتك الوطنية من اللوائح.\nالسبب: ${banSnap.data().reason}`);
+            signOut(auth).then(() => { window.location.href = "gateway.html"; });
+            return;
+          }
+          
+          // Load other assets
+          window.loadAnnouncement();
+          window.loadDashboardCMS();
+          window.loadActiveInitiatives();
+        } else {
+          alert("ملف حساب المتطوع غير موجود، يرجى التسجيل مجدداً.");
+          window.location.href = "gateway.html";
+        }
+      } catch (e) {
+        console.error("Critical Auth Sync Error:", e);
+      }
+      
+      const overlay = document.getElementById("authLoadingOverlay");
+      if (overlay) overlay.remove();
+    });
+
+    window.loadAnnouncement = function() {
+      db.collection('settings').doc('announcement').get().then(docSnap => {
+        if (docSnap.exists && docSnap.data().content) {
+          document.getElementById('announcementText').innerText = docSnap.data().content;
+          document.getElementById('announcementBanner').style.display = 'flex';
+        } else {
+          document.getElementById('announcementBanner').style.display = 'none';
+        }
+      });
+    };
+
+    window.loadDashboardCMS = function() {
+      db.collection('settings').doc('dashboard_cms').get().then(docSnap => {
+        if (docSnap.exists) {
+          const d = docSnap.data();
+          if (d.certNote) document.getElementById('certNoteText').innerText = d.certNote;
+          if (d.guideLink) document.getElementById('guideCardLink').href = d.guideLink;
+        }
+      });
+    };
+
+    window.checkGuideLink = function(e) {
+      const link = document.getElementById('guideCardLink').href;
+      if (link.endsWith('#') || link === window.location.href) {
+        e.preventDefault();
+        alert("لم يقم الإدارة بتعيين رابط الحقيبة التدريبية حالياً.");
+      }
+    };
+
+    // Active initiatives renderer for volunteers
+    window.loadActiveInitiatives = async function() {
+      const container = document.getElementById('initiativesContainer');
+      try {
+        const initsSnap = await db.collection('initiatives').where('status', '==', 'active').get();
+        const regsSnap = await db.collection('registrations').where('email', '==', userEmail).get();
+        
+        const myRegs = {};
+        regsSnap.forEach(d => {
+          const r = d.data();
+          myRegs[r.initiativeName] = { id: d.id, status: r.approvalStatus || 'pending', attendance: r.attendance || 'none' };
+        });
+
+        container.innerHTML = '';
+        if (initsSnap.empty) {
+          container.innerHTML = `<div class="empty-state-wrapper">
+            <div class="empty-state-icon"><i class="fa-solid fa-circle-info"></i></div>
+            <div class="empty-state-title">لا توجد مبادرات معلنة حالياً</div>
+            <div class="empty-state-desc">ترقب إعلانات الإدارة للمبادرات والفعاليات الصحية القادمة.</div>
+          </div>`;
+          return;
+        }
+
+        initsSnap.forEach(docSnap => {
+          const item = docSnap.data();
+          const alreadyReg = myRegs[item.name];
+          
+          let actionBtnHTML = '';
+          if (alreadyReg) {
+            const status = alreadyReg.status;
+            const att = alreadyReg.attendance;
+            
+            let badgeHTML = '';
+            if (status === 'approved') {
+              badgeHTML = `<span class="badge badge-success"><i class="fa-solid fa-check-circle"></i> تم قبول طلبك</span>`;
+              if (att === 'present') badgeHTML += ` <span class="badge badge-success"><i class="fa-solid fa-user-check"></i> حاضر بالميدان</span>`;
+              else if (att === 'absent') badgeHTML += ` <span class="badge badge-danger"><i class="fa-solid fa-user-minus"></i> غائب</span>`;
+              else if (att === 'withdrawn') badgeHTML += ` <span class="badge badge-danger"><i class="fa-solid fa-ban"></i> منسحب</span>`;
+              
+              if (att !== 'withdrawn' && att !== 'present' && att !== 'absent') {
+                actionBtnHTML = `<button class="btn-hms btn-danger btn-sm" onclick="window.openWithdrawModal('${item.name}')"><i class="fa-solid fa-right-from-bracket"></i> تقديم اعتذار وانسحاب</button>`;
+              }
+            } else if (status === 'rejected') {
+              badgeHTML = `<span class="badge badge-danger"><i class="fa-solid fa-times-circle"></i> تم الاعتذار / الرفض</span>`;
+            } else {
+              badgeHTML = `<span class="badge badge-warning"><i class="fa-solid fa-clock"></i> قيد المراجعة الإدارية</span>`;
+              actionBtnHTML = `<button class="btn-hms btn-danger btn-sm" onclick="window.openWithdrawModal('${item.name}')"><i class="fa-solid fa-right-from-bracket"></i> إلغاء طلب الحجز</button>`;
+            }
+            
+            actionBtnHTML = `<div style="display:flex; justify-content:space-between; align-items:center; width:100%; flex-wrap:wrap; gap:10px;">
+              <div style="display:flex; gap:6px;">${badgeHTML}</div>
+              ${actionBtnHTML}
+            </div>`;
+          } else {
+            if (item.isFull) {
+              actionBtnHTML = `<button class="btn-hms btn-outline btn-sm" disabled style="opacity:0.6;"><i class="fa-solid fa-lock"></i> اكتمل عدد المقاعد المطلوبة</button>`;
+            } else {
+              actionBtnHTML = `<button class="btn-hms btn-primary btn-sm" onclick="window.openRegModal('${item.name}', '${item.roles ? item.roles.join(',') : ''}')"><i class="fa-solid fa-check"></i> حجز مقعد واختيار المهام</button>`;
+            }
+          }
+
+          container.innerHTML += `<div class="initiative-item">
+            <div class="init-header">
+              <span class="init-name">${item.name}</span>
+              <span class="badge badge-primary font-en">${item.hours} Hrs</span>
+            </div>
+            <div class="init-meta">
+              <span><i class="fa-solid fa-calendar-days"></i> تاريخ الفعالية: <strong class="font-en">${item.date}</strong></span>
+              ${item.capacity ? `<span><i class="fa-solid fa-users"></i> السعة القصوى: <strong class="font-en">${item.capacity} متطوع</strong></span>` : ''}
+            </div>
+            <div class="init-roles">المهام الميدانية: <span>${item.roles ? item.roles.join(' - ') : 'مشارك عام'}</span></div>
+            <div class="init-actions" style="margin-top:4px; padding-top:10px; border-top:1px solid var(--border);">${actionBtnHTML}</div>
+          </div>`;
+        });
+      } catch (e) {
+        console.error(e);
+        container.innerHTML = '<p style="text-align:center; color:var(--danger); padding:20px 0;">فشل الاتصال بقاعدة المبادرات.</p>';
+      }
+    };
+
+    // Registration initiatives submission
+    let targetInitiativeName = "";
+    let targetInitiativeRoles = [];
+    window.openRegModal = function(name, rolesStr) {
+      targetInitiativeName = name;
+      targetInitiativeRoles = rolesStr ? rolesStr.split(',') : [];
+      
+      window.openModal('regModal');
+      document.getElementById('modalInitName').innerText = name;
+      document.getElementById('regName').value = userFullName;
+      document.getElementById('regId').value = '';
+      document.getElementById('regMsg').innerText = '';
+
+      const container = document.getElementById('rolesCheckboxesContainer');
+      container.innerHTML = '';
+      
+      if (targetInitiativeRoles.length === 0) {
+        container.innerHTML = '<label class="custom-checkbox-card"><input type="checkbox" name="regRoles" value="مشارك عام" checked> <span>مشارك ميداني عام</span></label>';
+        return;
+      }
+
+      targetInitiativeRoles.forEach(r => {
+        container.innerHTML += `<label class="custom-checkbox-card"><input type="checkbox" name="regRoles" value="${r}"> <span>${r}</span></label>`;
+      });
+    };
+
+    window.submitRegistration = async function() {
+      const nid = document.getElementById('regId').value.trim();
+      const msg = document.getElementById('regMsg');
+      
+      const selectedRoles = [];
+      const checkboxes = document.getElementsByName('regRoles');
+      checkboxes.forEach(c => { if (c.checked) selectedRoles.push(c.value); });
+
+      if (!nid) { msg.style.color = 'var(--danger)'; msg.innerText = 'يرجى تأكيد الهوية الوطنية للمطابقة.'; return; }
+      if (selectedRoles.length === 0) { msg.style.color = 'var(--danger)'; msg.innerText = 'يرجى تحديد مهمة واحدة على الأقل.'; return; }
+      
+      msg.style.color = 'var(--text-secondary)';
+      msg.innerText = 'جاري تقديم الطلب...';
+
+      try {
+        // المطابقة الأمنية
+        const userSnap = await db.collection('users').doc(userEmail).get();
+        if (userSnap.exists && userSnap.data().nationalId !== nid) {
+          msg.style.color = 'var(--danger)';
+          msg.innerText = 'رقم الهوية الوطنية غير متطابق مع المسجل بحسابك.';
+          return;
+        }
+
+        // تسجيل الطلب
+        await db.collection('registrations').add({
+          initiativeName: targetInitiativeName,
+          email: userEmail,
+          fullName: userFullName,
+          nationalId: nid,
+          phone: userPhoneNo || "",
+          major: userSnap.data().major || "غير محدد",
+          location: userSnap.data().location || "غير محدد",
+          appliedRoles: selectedRoles,
+          approvalStatus: 'pending',
+          attendance: 'pending',
+          timestamp: new Date().toLocaleString('ar-SA')
+        });
+
+        msg.style.color = 'var(--success)';
+        msg.innerHTML = '<i class="fa-solid fa-circle-check"></i> تم حجز مقعدك بنجاح! طلبك قيد المراجعة.';
+        window.loadActiveInitiatives();
+        setTimeout(() => window.closeModal('regModal'), 2000);
+      } catch (e) {
+        console.error(e);
+        msg.style.color = 'var(--danger)';
+        msg.innerText = 'خطأ بالارسال، حاول مجدداً.';
+      }
+    };
+
+    // Withdrawal/Excuse actions
+    let withdrawInitTarget = "";
+    window.openWithdrawModal = function(name) {
+      withdrawInitTarget = name;
+      window.openModal('withdrawModal');
+      document.getElementById('withdrawInitName').innerText = name;
+      document.getElementById('withdrawExcuseInput').value = '';
+    };
+
+    window.submitWithdraw = async function() {
+      const excuse = document.getElementById('withdrawExcuseInput').value.trim();
+      if (!excuse) { alert("يرجى كتابة عذر الانسحاب."); return; }
+      
+      try {
+        const q = query(collection(db, "registrations"), where("email", "==", userEmail), where("initiativeName", "==", withdrawInitTarget));
+        const qs = await getDocs(q);
+        
+        if (!qs.empty) {
+          const regDoc = qs.docs[0];
+          const status = regDoc.data().approvalStatus;
+          
+          if (status === 'approved') {
+            await updateDoc(doc(db, "registrations", regDoc.id), { attendance: 'withdrawn', excuse: excuse });
+            alert("تم إيداع عذر الانسحاب وإلغاء حضورك الميداني.");
+          } else {
+            await deleteDoc(doc(db, "registrations", regDoc.id));
+            alert("تم إلغاء حجز المقعد بنجاح.");
+          }
+          window.loadActiveInitiatives();
+          window.closeModal('withdrawModal');
+        }
+      } catch (e) {
+        console.error(e);
+        alert("حدث خطأ أثناء تنفيذ الطلب.");
+      }
+    };
+
+    document.getElementById('logoutBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      signOut(auth).then(() => { window.location.href = "gateway.html"; });
+    });
+  </script>
+</body>
+</html>

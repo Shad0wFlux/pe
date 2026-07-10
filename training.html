@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>المكتبة والحقيبة التدريبية — مستشفى برلين التطوعي</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="theme.js"></script>
+  <style>
+    .training-hero {
+      text-align: center;
+      margin-bottom: var(--space-2xl);
+    }
+    .training-hero .tag {
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .training-hero h1 {
+      font-size: 1.85rem;
+      font-weight: 900;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    .training-hero p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+    .training-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--space-lg);
+    }
+    .training-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: var(--shadow-sm);
+      transition: all var(--transition-base);
+    }
+    .training-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--primary);
+    }
+    .training-card-icon {
+      font-size: 2.8rem;
+      margin-bottom: var(--space-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .training-card-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .training-card-desc {
+      color: var(--text-secondary);
+      font-size: 0.88rem;
+      line-height: 1.6;
+      margin-bottom: var(--space-lg);
+      text-align: justify;
+    }
+  </style>
+</head>
+<body style="display:none;">
+
+  <div class="admin-layout">
+    
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="window.toggleSidebar()"></div>
+
+    <!-- ===== Collapsible Sidebar ===== -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="sidebar-brand">
+        <img src="logo.png" alt="شعار مستشفى برلين">
+        <span>فريق برلين الطبي</span>
+      </div>
+      
+      <div class="sidebar-scroll">
+        <!-- Section Overview -->
+        <div class="sidebar-accordion-section">
+          <button class="accordion-trigger active" id="trigger-overview">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <span>الحقيبة التدريبية</span>
+            <i class="fa-solid fa-chevron-left arrow-icon"></i>
+          </button>
+          <div class="accordion-content expanded" id="content-overview">
+            <a href="#" class="sidebar-menu-subitem active" onclick="location.reload(); return false;">
+              <i class="fa-solid fa-book-open"></i> الأدلة والمكتبة
+            </a>
+          </div>
+        </div>
+
+        <!-- Section Navigation Links -->
+        <div class="sidebar-accordion-section">
+          <button class="accordion-trigger" id="trigger-nav">
+            <i class="fa-solid fa-link"></i>
+            <span>روابط سريعة</span>
+            <i class="fa-solid fa-chevron-left arrow-icon"></i>
+          </button>
+          <div class="accordion-content" id="content-nav">
+            <a href="dashboard.html" class="sidebar-menu-subitem">
+              <i class="fa-solid fa-user-injured"></i> لوحة المتطوع
+            </a>
+            <a href="index.html" class="sidebar-menu-subitem">
+              <i class="fa-solid fa-house-medical"></i> الموقع الرئيسي
+            </a>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ===== Main Content Wrapper ===== -->
+    <div class="main-content-wrapper">
+      
+      <!-- Top Navbar -->
+      <nav class="top-nav">
+        <div class="top-nav-left">
+          <button class="nav-toggle-btn" id="sidebarToggle" aria-label="تبديل القائمة">
+            <i class="fa-solid fa-bars-staggered"></i>
+          </button>
+          <div class="org-badge">
+            <i class="fa-solid fa-graduation-cap" style="color:var(--primary);"></i>
+            <span>المكتبة والأكاديمية التدريبية</span>
+          </div>
+        </div>
+        
+        <div class="top-nav-right">
+          <div class="nav-actions-group">
+            <button class="nav-action-btn" title="تغيير الاتجاه LTR/RTL" onclick="window.toggleDirection()">
+              <i class="fa-solid fa-language"></i>
+            </button>
+          </div>
+          <div class="menu-divider" style="width:1px; height:24px; background:var(--border); margin:0 8px;"></div>
+          <a href="dashboard.html" class="btn-hms btn-secondary btn-sm">
+            <i class="fa-solid fa-chevron-left"></i> العودة للوحة المتطوع
+          </a>
+        </div>
+      </nav>
+
+      <!-- Page Content -->
+      <main class="page-container">
+        
+        <div class="training-hero">
+          <div class="tag"><i class="fa-solid fa-book-open"></i> مكتبة التمكين</div>
+          <h1>مكتبة الفريق والحقيبة التدريبية</h1>
+          <p>ملفات أساسية، أدلة إرشادية، وسياسات تهم كل متطوع وقائد في الفريق</p>
+        </div>
+
+        <div class="training-grid">
+          <!-- Card 1 -->
+          <div class="training-card">
+            <div>
+              <div class="training-card-icon"><i class="fa-solid fa-file-lines" style="color: var(--danger);"></i></div>
+              <h3 class="training-card-title">دليل المتطوع الشامل</h3>
+              <p class="training-card-desc">يحتوي على سياسات العمل، حقوق المتطوع، وآلية احتساب الساعات المعتمدة في النظام الرقمي الموحد للفريق.</p>
+            </div>
+            <button class="btn-hms btn-primary btn-sm" style="width:100%;" onclick="alert('جاري تجهيز الملف للإطلاق قريباً!')"><i class="fa-solid fa-download"></i> تحميل الملف</button>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="training-card">
+            <div>
+              <div class="training-card-icon"><i class="fa-solid fa-stethoscope" style="color: var(--primary);"></i></div>
+              <h3 class="training-card-title">أساسيات مكافحة العدوى</h3>
+              <p class="training-card-desc">دليل إرشادي مخصص للجان الميدانية للتعامل الآمن والمهني أثناء المبادرات التوعوية الطبية الميدانية.</p>
+            </div>
+            <button class="btn-hms btn-primary btn-sm" style="width:100%;" onclick="alert('جاري تجهيز الملف للإطلاق قريباً!')"><i class="fa-solid fa-download"></i> تحميل الملف</button>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="training-card">
+            <div>
+              <div class="training-card-icon"><i class="fa-solid fa-chart-bar" style="color: var(--warning);"></i></div>
+              <h3 class="training-card-title">نماذج التقارير الإدارية</h3>
+              <p class="training-card-desc">قوالب ونماذج جاهزة مخصصة لقادة الأقسام واللجان لرفع التقارير الميدانية الدورية بشكل احترافي موحد.</p>
+            </div>
+            <button class="btn-hms btn-primary btn-sm" style="width:100%;" onclick="alert('جاري تجهيز الملف للإطلاق قريباً!')"><i class="fa-solid fa-download"></i> تحميل الملف</button>
+          </div>
+
+          <!-- Card 4 -->
+          <div class="training-card">
+            <div>
+              <div class="training-card-icon"><i class="fa-solid fa-bullseye" style="color: var(--danger);"></i></div>
+              <h3 class="training-card-title">بروتوكول الحضور والغياب</h3>
+              <p class="training-card-desc">السياسة الرسمية للحضور في المبادرات والغياب المبرر والمقاييس المترتبة على الغياب المتكرر للفريق.</p>
+            </div>
+            <button class="btn-hms btn-primary btn-sm" style="width:100%;" onclick="alert('جاري تجهيز الملف للإطلاق قريباً!')"><i class="fa-solid fa-download"></i> تحميل الملف</button>
+          </div>
+
+          <!-- Card 5 -->
+          <div class="training-card">
+            <div>
+              <div class="training-card-icon"><i class="fa-solid fa-seedling" style="color: var(--success);"></i></div>
+              <h3 class="training-card-title">الأثر الميداني والتقييم</h3>
+              <p class="training-card-desc">منهجية تقييم مبادرات الفريق ومعايير قياس الأثر الصحي والمجتمعي للفعاليات والرحلات التطوعية.</p>
+            </div>
+            <button class="btn-hms btn-primary btn-sm" style="width:100%;" onclick="alert('جاري تجهيز الملف للإطلاق قريباً!')"><i class="fa-solid fa-download"></i> تحميل الملف</button>
+          </div>
+
+          <!-- Card 6 -->
+          <div class="training-card">
+            <div>
+              <div class="training-card-icon"><i class="fa-solid fa-lightbulb" style="color: var(--warning);"></i></div>
+              <h3 class="training-card-title">دليل التواصل والإعلام</h3>
+              <p class="training-card-desc">معايير التواصل الرسمي وإدارة حسابات الفريق الإعلامية وسياسات النشر الإبداعي على المنصات الرقمية.</p>
+            </div>
+            <button class="btn-hms btn-primary btn-sm" style="width:100%;" onclick="alert('جاري تجهيز الملف للإطلاق قريباً!')"><i class="fa-solid fa-download"></i> تحميل الملف</button>
+          </div>
+        </div>
+
+      </main>
+      
+      <!-- Footer -->
+      <footer style="margin-top:auto; padding:24px; text-align:center; border-top:1px solid var(--border); background:var(--surface); font-size:0.85rem; color:var(--text-secondary);">
+        <p>© 2026 فريق برلين الطبي التطوعي. كافة الحقوق محفوظة للمكتبة التدريبية.</p>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Float Theme Switcher -->
+  <button id="themeToggle" class="theme-toggle-btn" aria-label="تبديل الثيم"><i class="fa-solid fa-sun"></i></button>
+
+  <!-- Firebase Compat Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script>
+    const firebaseConfig = { 
+      apiKey: "AIzaSyAObqy7xz2BFlSCEJED7ZjWgPwyM5fQOqU", 
+      authDomain: "berlinteamapp.firebaseapp.com", 
+      projectId: "berlinteamapp", 
+      storageBucket: "berlinteamapp.appspot.com", 
+      messagingSenderId: "986675866046", 
+      appId: "1:986675866046:web:15bb3e179762e5aef0f1ef" 
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    auth.onAuthStateChanged((user) => { 
+      if (!user) { window.location.href = "login.html"; return; }
+      document.body.style.display = ''; // Reveal body
+    });
+
+    // Sidebar Toggling
+    window.toggleSidebar = function() {
+      const layout = document.querySelector('.admin-layout');
+      const sidebar = document.getElementById('adminSidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      if (window.innerWidth >= 992) {
+        layout.classList.toggle('sidebar-collapsed');
+      } else {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('show');
+      }
+    };
+    document.getElementById('sidebarToggle').addEventListener('click', window.toggleSidebar);
+
+    // Direction layout swapper
+    window.toggleDirection = function() {
+      const htmlDir = document.documentElement.getAttribute('dir');
+      if (htmlDir === 'rtl') {
+        document.documentElement.setAttribute('dir', 'ltr');
+        document.documentElement.style.textAlign = 'left';
+      } else {
+        document.documentElement.setAttribute('dir', 'rtl');
+        document.documentElement.style.textAlign = '';
+      }
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>بوابة الدخول الموحدة — فريق برلين التطوعي</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="theme.js"></script>
+  <style>
+    .gateway-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: var(--space-xl) var(--space-md);
+      position: relative;
+      z-index: 1;
+    }
+    .gateway-header {
+      text-align: center;
+      margin-bottom: var(--space-2xl);
+    }
+    .gateway-logo {
+      width: 80px;
+      height: 80px;
+      border-radius: var(--radius-md);
+      margin: 0 auto var(--space-md);
+      display: block;
+      box-shadow: var(--shadow-md);
+      border: 2.5px solid var(--primary);
+      transition: transform var(--transition-base);
+    }
+    .gateway-logo:hover {
+      transform: scale(1.05);
+    }
+    .gateway-header h1 {
+      font-size: 1.85rem;
+      font-weight: 900;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .gateway-header p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+    .gateway-cards-grid {
+      display: flex;
+      gap: var(--space-lg);
+      justify-content: center;
+      flex-wrap: wrap;
+      max-width: 680px;
+      width: 100%;
+    }
+    .gateway-card-wrapper {
+      flex: 1;
+      min-width: 280px;
+      max-width: 320px;
+    }
+    .gateway-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-xl) var(--space-md);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all var(--transition-base);
+    }
+    .gateway-card:hover {
+      transform: translateY(-8px);
+      border-color: var(--primary);
+      box-shadow: var(--shadow-lg), var(--shadow-glow);
+    }
+    .gateway-card-icon-container {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      color: var(--primary);
+      margin-bottom: var(--space-md);
+      transition: all var(--transition-base);
+    }
+    .gateway-card:hover .gateway-card-icon-container {
+      background: var(--primary);
+      color: white;
+      transform: scale(1.05);
+    }
+    .gateway-card.admin-gate:hover .gateway-card-icon-container {
+      background: var(--warning);
+      color: #0F172A;
+    }
+    .gateway-card.admin-gate:hover {
+      border-color: var(--warning);
+      box-shadow: var(--shadow-lg), 0 0 15px rgba(245, 158, 11, 0.2);
+    }
+    .gateway-card h3 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    .gateway-card p {
+      color: var(--text-secondary);
+      font-size: 0.88rem;
+      line-height: 1.6;
+      margin-bottom: var(--space-md);
+      flex: 1;
+    }
+    .gateway-card-badge {
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 6px 14px;
+    }
+    .back-to-home {
+      margin-top: var(--space-2xl);
+    }
+    .back-to-home a {
+      color: var(--text-secondary);
+      font-size: 0.88rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color var(--transition-fast);
+    }
+    .back-to-home a:hover {
+      color: var(--primary);
+    }
+  </style>
+</head>
+<body class="auth-page-bg">
+
+  <div class="gateway-container">
+    <header class="gateway-header">
+      <img src="logo.png" alt="شعار فريق برلين" class="gateway-logo">
+      <h1>بوابة الدخول الموحدة</h1>
+      <p>اختر نوع حسابك للوصول إلى المنصة</p>
+    </header>
+
+    <div class="gateway-cards-grid">
+      <div class="gateway-card-wrapper">
+        <a href="login.html" class="gateway-card">
+          <div class="gateway-card-icon-container">
+            <i class="fa-solid fa-user-injured"></i>
+          </div>
+          <h3>حساب المتطوع</h3>
+          <p>متابعة الساعات، التسجيل في المبادرات، واستعراض الإنجازات الشخصية والأوسمة.</p>
+          <span class="badge badge-primary gateway-card-badge">دخول المتطوعين <i class="fa-solid fa-arrow-left"></i></span>
+        </a>
+      </div>
+      
+      <div class="gateway-card-wrapper">
+        <a href="admin_login.html" class="gateway-card admin-gate">
+          <div class="gateway-card-icon-container" style="color: var(--warning); background: var(--warning-light);">
+            <i class="fa-solid fa-user-md"></i>
+          </div>
+          <h3>الإدارة والقادة</h3>
+          <p>إدارة الأقسام، كتابة التقارير، تحضير الكشوفات، واعتماد الساعات التطوعية للفريق.</p>
+          <span class="badge badge-warning gateway-card-badge" style="background: var(--warning-light); color: var(--warning);">دخول القادة <i class="fa-solid fa-arrow-left"></i></span>
+        </a>
+      </div>
+    </div>
+
+    <div class="back-to-home">
+      <a href="index.html">
+        <i class="fa-solid fa-house-medical"></i> العودة للموقع الرئيسي
+      </a>
+    </div>
+  </div>
+
+  <button id="themeToggle" class="theme-toggle-btn" aria-label="تبديل الثيم"><i class="fa-solid fa-sun"></i></button>
+
+</body>
+</html>

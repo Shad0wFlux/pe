@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إنشاء حساب متطوع — فريق برلين التطوعي</title>
+  <link class="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="theme.js"></script>
+  <style>
+    .auth-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: var(--space-md);
+      position: relative;
+      z-index: 1;
+    }
+    .auth-card-premium {
+      width: 100%;
+      max-width: 480px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-xl);
+      box-shadow: var(--shadow-xl);
+      animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    .auth-logo-premium {
+      text-align: center;
+      margin-bottom: var(--space-lg);
+    }
+    .auth-logo-premium img {
+      width: 72px;
+      height: 72px;
+      border-radius: var(--radius-md);
+      margin: 0 auto var(--space-sm);
+      display: block;
+      border: 2px solid var(--primary);
+      box-shadow: var(--shadow-md);
+    }
+    .auth-logo-premium h2 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .auth-logo-premium p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .auth-message {
+      font-size: 0.85rem;
+      font-weight: 700;
+      min-height: 24px;
+      margin-top: 14px;
+      text-align: center;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      display: none;
+    }
+  </style>
+</head>
+<body class="auth-page-bg">
+
+  <div class="auth-container">
+    <div class="auth-card-premium">
+      <div class="auth-logo-premium">
+        <img src="logo.png" alt="شعار فريق برلين">
+        <h2>إنشاء حساب متطوع</h2>
+        <p>أدخل بياناتك الرسمية للانضمام إلى فريق برلين التطوعي</p>
+      </div>
+
+      <div class="form-group form-group-with-icon">
+        <label for="signupName">الاسم الرباعي الصريح</label>
+        <div class="form-control-wrapper">
+          <input type="text" id="signupName" class="form-control" placeholder="مثال: عيسى يحيى فرحان المالكي" required>
+          <i class="fa-solid fa-user form-control-icon"></i>
+        </div>
+      </div>
+
+      <div class="form-group form-group-with-icon">
+        <label for="signupNationalId">رقم الهوية الوطنية / الإقامة</label>
+        <div class="form-control-wrapper">
+          <input type="number" id="signupNationalId" class="form-control font-en" placeholder="أدخل 10 أرقام" required>
+          <i class="fa-solid fa-id-card form-control-icon"></i>
+        </div>
+      </div>
+
+      <div class="form-group form-group-with-icon">
+        <label for="signupPhone">رقم الجوال</label>
+        <div class="form-control-wrapper">
+          <input type="tel" id="signupPhone" class="form-control font-en" placeholder="05xxxxxxxx" required>
+          <i class="fa-solid fa-phone form-control-icon"></i>
+        </div>
+      </div>
+
+      <div class="form-group form-group-with-icon">
+        <label for="signupEmail">البريد الإلكتروني</label>
+        <div class="form-control-wrapper">
+          <input type="email" id="signupEmail" class="form-control font-en" placeholder="username@gmail.com" required autocomplete="email">
+          <i class="fa-solid fa-envelope form-control-icon"></i>
+        </div>
+      </div>
+
+      <div class="form-group form-group-with-icon">
+        <label for="signupPassword">كلمة المرور</label>
+        <div class="form-control-wrapper">
+          <input type="password" id="signupPassword" class="form-control" placeholder="كلمة مرور قوية (6 أحرف أو أكثر)" required>
+          <i class="fa-solid fa-lock form-control-icon"></i>
+        </div>
+      </div>
+
+      <div class="form-group form-group-with-icon">
+        <label for="signupPasswordConfirm">تأكيد كلمة المرور</label>
+        <div class="form-control-wrapper">
+          <input type="password" id="signupPasswordConfirm" class="form-control" placeholder="أعادة كتابة كلمة المرور للتأكيد" required>
+          <i class="fa-solid fa-lock-open form-control-icon"></i>
+        </div>
+      </div>
+
+      <button id="signupBtn" class="btn-hms btn-primary" style="width: 100%; padding: 12px; margin-top: 10px;">
+        <i class="fa-solid fa-user-plus"></i> إنشاء الحساب وتوثيق الإيميل
+      </button>
+
+      <div id="message" class="auth-message"></div>
+
+      <div class="auth-links" style="margin-top: var(--space-lg); text-align: center;">
+        <a href="login.html" style="color: var(--text-secondary); font-weight: 600;">لديك حساب بالفعل؟ سجل دخولك <i class="fa-solid fa-chevron-left"></i></a>
+      </div>
+    </div>
+  </div>
+
+  <button id="themeToggle" class="theme-toggle-btn" aria-label="تبديل الثيم"><i class="fa-solid fa-sun"></i></button>
+
+  <!-- Firebase Compat Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAObqy7xz2BFlSCEJED7ZjWgPwyM5fQOqU",
+      authDomain: "berlinteamapp.firebaseapp.com",
+      projectId: "berlinteamapp",
+      storageBucket: "berlinteamapp.appspot.com",
+      messagingSenderId: "986675866046",
+      appId: "1:986675866046:web:15bb3e179762e5aef0f1ef"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    document.getElementById("signupBtn").addEventListener("click", async () => {
+      const name = document.getElementById("signupName").value.trim();
+      const nid = document.getElementById("signupNationalId").value.trim();
+      const phone = document.getElementById("signupPhone").value.trim();
+      const email = document.getElementById("signupEmail").value.trim().toLowerCase();
+      const password = document.getElementById("signupPassword").value;
+      const confirmPassword = document.getElementById("signupPasswordConfirm").value;
+      const msg = document.getElementById("message");
+
+      msg.style.display = 'block';
+      msg.style.background = '';
+      msg.style.color = '';
+      msg.innerText = "";
+
+      if (!name || !nid || !phone || !email || !password || !confirmPassword) {
+        msg.style.background = 'var(--danger-light)';
+        msg.style.color = 'var(--danger)';
+        msg.innerText = "يرجى ملء جميع الحقول المطلوبة.";
+        return;
+      }
+      if (nid.length !== 10) {
+        msg.style.background = 'var(--danger-light)';
+        msg.style.color = 'var(--danger)';
+        msg.innerText = "يجب أن يتكون رقم الهوية من 10 أرقام دقيقة.";
+        return;
+      }
+      if (password !== confirmPassword) {
+        msg.style.background = 'var(--danger-light)';
+        msg.style.color = 'var(--danger)';
+        msg.innerText = "كلمتي المرور غير متطابقتين، يرجى التأكد.";
+        return;
+      }
+
+      msg.style.background = 'var(--primary-light)';
+      msg.style.color = 'var(--primary)';
+      msg.innerText = "جاري إنشاء الحساب وإرسال رابط التوثيق...";
+      document.getElementById("signupBtn").disabled = true;
+
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        await userCredential.user.sendEmailVerification();
+
+        await db.collection("users").doc(email).set({
+          name: name,
+          nationalId: nid,
+          phone: phone,
+          hours: 0,
+          role: "volunteer",
+          permissions: [],
+          timestamp: new Date().toLocaleDateString('ar-SA')
+        });
+
+        // Sync to Google Sheets
+        const googleAppScriptUrl = "https://script.google.com/macros/s/AKfycbwA3WcFj5UtqDP6x7MF4TjD5lm0E_IWjAGhVHsNFMd2GRhLRBJIHxOMwHf7HU1S_bdU/exec";
+        try {
+          await fetch(googleAppScriptUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              timestamp: new Date().toLocaleString('ar-SA'),
+              name, email, phone, nationalId: nid
+            })
+          });
+        } catch (sheetError) {
+          console.error("Sheet Sync Error:", sheetError);
+        }
+
+        msg.style.background = 'var(--success-light)';
+        msg.style.color = 'var(--success)';
+        msg.innerHTML = '<i class="fa-solid fa-circle-check"></i> تم إنشاء حسابك بنجاح!\nلقد أرسلنا رابط توثيق إلى بريدك الإلكتروني، يرجى التحقق من صندوق الوارد ثم تسجيل الدخول.';
+        msg.style.whiteSpace = 'pre-line';
+
+        setTimeout(() => { window.location.href = "login.html"; }, 5000);
+
+      } catch (error) {
+        msg.style.background = 'var(--danger-light)';
+        msg.style.color = 'var(--danger)';
+        if (error.code === 'auth/email-already-in-use') msg.innerText = "البريد الإلكتروني مسجل مسبقاً في النظام.";
+        else if (error.code === 'auth/weak-password') msg.innerText = "كلمة المرور ضعيفة (يجب أن تكون 6 أحرف على الأقل).";
+        else msg.innerText = "حدث خطأ غير متوقع، يرجى المحاولة لاحقاً.";
+        document.getElementById("signupBtn").disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

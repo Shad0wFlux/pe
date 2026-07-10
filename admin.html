@@ -1,0 +1,2455 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>النظام الإداري الموحد — مستشفى برلين التطوعي</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="theme.js"></script>
+  <style>
+    /* Admin specific styles */
+    .admin-stats-card {
+      border-top: 4px solid var(--primary);
+    }
+    .admin-stats-card.card-alt-1 {
+      border-top-color: var(--warning);
+    }
+    .admin-stats-card.card-alt-2 {
+      border-top-color: var(--success);
+    }
+    .admin-stats-card.card-alt-3 {
+      border-top-color: var(--accent);
+    }
+    
+    /* Accordion in tab content */
+    .accordion-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-sm);
+      overflow: hidden;
+      transition: all var(--transition-fast);
+    }
+    .accordion-item-header {
+      background: var(--surface);
+      padding: 14px 20px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      color: var(--text-primary);
+      user-select: none;
+      transition: background var(--transition-fast);
+    }
+    .accordion-item-header:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+    .accordion-item-header i {
+      color: var(--primary);
+      font-size: 1.05rem;
+    }
+    .accordion-item-header .arrow-icon {
+      font-size: 0.8rem;
+      transition: transform var(--transition-base);
+    }
+    .accordion-item-content {
+      max-height: 0;
+      overflow: hidden;
+      padding: 0 20px;
+      transition: all var(--transition-slow) cubic-bezier(0, 1, 0, 1);
+      background: var(--background);
+      border-top: 0 solid var(--border);
+    }
+    .accordion-item.open {
+      border-color: var(--primary);
+    }
+    .accordion-item.open .accordion-item-header {
+      background: var(--primary-light);
+      color: var(--primary);
+      border-bottom: 1px solid var(--border);
+    }
+    .accordion-item.open .accordion-item-header .arrow-icon {
+      transform: rotate(-90deg);
+    }
+    .accordion-item.open .accordion-item-content {
+      max-height: 2000px;
+      padding: 20px;
+      transition: all var(--transition-slow) cubic-bezier(0.4, 0, 0.2, 1);
+      border-top: 1px solid var(--border);
+    }
+    
+    /* Dashboard specific elements */
+    .recent-activity-item {
+      display: flex;
+      gap: var(--space-md);
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .recent-activity-item:last-child {
+      border-bottom: none;
+    }
+    .recent-activity-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .recent-activity-content {
+      flex: 1;
+    }
+    .recent-activity-title {
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: var(--text-primary);
+    }
+    .recent-activity-time {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Pre-loader Authentication Overlay -->
+  <div id="authLoadingOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--background); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--text-primary); font-family: var(--font-primary);">
+    <div style="font-size: 3.5rem; color: var(--primary); margin-bottom: var(--space-md); animation: spin 1.2s linear infinite;"><i class="fa-solid fa-spinner"></i></div>
+    <h3 style="font-weight: 800; font-size: 1.25rem;">جاري التحقق من الصلاحيات الأمنية والربط السحابي...</h3>
+    <style>
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+  </div>
+
+  <div class="admin-layout">
+    
+    <!-- Sidebar Overlay for Mobile Viewports -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="window.toggleSidebar()"></div>
+
+    <!-- ===== Collapsible Sidebar ===== -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="sidebar-brand">
+        <img src="logo.png" alt="شعار مستشفى برلين">
+        <span>فريق برلين الطبي</span>
+      </div>
+      
+      <div class="sidebar-scroll">
+        <!-- Section Overview -->
+        <div class="sidebar-accordion-section">
+          <button class="accordion-trigger active" id="trigger-overview">
+            <i class="fa-solid fa-house-medical"></i>
+            <span>لوحة المتابعة العامة</span>
+            <i class="fa-solid fa-chevron-left arrow-icon"></i>
+          </button>
+          <div class="accordion-content expanded" id="content-overview">
+            <a href="#" class="sidebar-menu-subitem active" id="menu-analytics" onclick="window.switchTab('analyticsSection', 'menu-analytics')">
+              <i class="fa-solid fa-chart-line"></i> مؤشرات الأداء والـ KPIs
+            </a>
+          </div>
+        </div>
+
+        <!-- Section HR -->
+        <div class="sidebar-accordion-section">
+          <button class="accordion-trigger" id="trigger-hr">
+            <i class="fa-solid fa-users-gear"></i>
+            <span>شؤون الكوادر والقبول</span>
+            <i class="fa-solid fa-chevron-left arrow-icon"></i>
+          </button>
+          <div class="accordion-content" id="content-hr">
+            <a href="#" class="sidebar-menu-subitem" id="menu-users" onclick="window.switchTab('usersManagementSection', 'menu-users')">
+              <i class="fa-solid fa-address-book"></i> الموارد البشرية والأعضاء
+            </a>
+          </div>
+        </div>
+
+        <!-- Section Initiatives -->
+        <div class="sidebar-accordion-section">
+          <button class="accordion-trigger" id="trigger-init">
+            <i class="fa-solid fa-hand-holding-medical"></i>
+            <span>إدارة المبادرات</span>
+            <i class="fa-solid fa-chevron-left arrow-icon"></i>
+          </button>
+          <div class="accordion-content" id="content-init">
+            <a href="#" class="sidebar-menu-subitem" id="menu-initiatives" onclick="window.switchTab('initiativesManagementSection', 'menu-initiatives')">
+              <i class="fa-solid fa-rocket"></i> المبادرات والتحضير الميداني
+            </a>
+          </div>
+        </div>
+
+        <!-- Section Operations -->
+        <div class="sidebar-accordion-section">
+          <button class="accordion-trigger" id="trigger-ops">
+            <i class="fa-solid fa-screwdriver-wrench"></i>
+            <span>العمليات والتقارير</span>
+            <i class="fa-solid fa-chevron-left arrow-icon"></i>
+          </button>
+          <div class="accordion-content" id="content-ops">
+            <a href="#" class="sidebar-menu-subitem" id="menu-operations" onclick="window.switchTab('operationsSection', 'menu-operations')">
+              <i class="fa-solid fa-file-invoice-dollar"></i> التقارير والتحضير الجماعي
+            </a>
+          </div>
+        </div>
+
+        <!-- Section Content -->
+        <div class="sidebar-accordion-section">
+          <button class="accordion-trigger" id="trigger-cms">
+            <i class="fa-solid fa-window-restore"></i>
+            <span>إدارة المحتوى CMS</span>
+            <i class="fa-solid fa-chevron-left arrow-icon"></i>
+          </button>
+          <div class="accordion-content" id="content-cms">
+            <a href="#" class="sidebar-menu-subitem" id="menu-cms" onclick="window.switchTab('cmsSection', 'menu-cms')">
+              <i class="fa-solid fa-desktop"></i> تعديل الواجهات والألبوم
+            </a>
+          </div>
+        </div>
+
+        <!-- Section Financial & Quick Links -->
+        <div class="sidebar-accordion-section">
+          <button class="accordion-trigger" id="trigger-finance">
+            <i class="fa-solid fa-wallet"></i>
+            <span>الصناديق والتدريب</span>
+            <i class="fa-solid fa-chevron-left arrow-icon"></i>
+          </button>
+          <div class="accordion-content" id="content-finance">
+            <a href="finance.html" class="sidebar-menu-subitem">
+              <i class="fa-solid fa-coins"></i> الصندوق والإدارة المالية
+            </a>
+            <a href="training.html" class="sidebar-menu-subitem">
+              <i class="fa-solid fa-graduation-cap"></i> الأكاديمية والتدريب
+            </a>
+            <a href="profile.html" class="sidebar-menu-subitem">
+              <i class="fa-solid fa-user-gear"></i> إعدادات الملف الشخصي
+            </a>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ===== Main Content Area ===== -->
+    <div class="main-content-wrapper">
+      
+      <!-- Top Navbar Navigation -->
+      <nav class="top-nav">
+        <div class="top-nav-left">
+          <button class="nav-toggle-btn" id="sidebarToggle" aria-label="تبديل القائمة">
+            <i class="fa-solid fa-bars-staggered"></i>
+          </button>
+          <div class="org-badge">
+            <i class="fa-solid fa-heart-pulse"></i>
+            <span>فريق برلين الطبي الموحد</span>
+          </div>
+          <!-- Global Search Mock -->
+          <div class="global-search-container">
+            <input type="text" class="global-search-input" placeholder="البحث السريع باللوحة (Ctrl + K)...">
+            <i class="fa-solid fa-magnifying-glass global-search-icon"></i>
+          </div>
+        </div>
+        
+        <div class="top-nav-right">
+          <div class="nav-actions-group">
+            <!-- Messages/Tickets -->
+            <button class="nav-action-btn" title="تذاكر الدعم والرسائل">
+              <i class="fa-solid fa-comment-medical"></i>
+              <span class="badge-dot"></span>
+            </button>
+            <!-- Notifications -->
+            <button class="nav-action-btn" title="تنبيهات النظام">
+              <i class="fa-solid fa-bell"></i>
+              <span class="badge-dot"></span>
+            </button>
+            <!-- Language Switcher -->
+            <button class="nav-action-btn" title="تغيير اتجاه العرض LTR/RTL" onclick="window.toggleDirection()">
+              <i class="fa-solid fa-language"></i>
+            </button>
+          </div>
+          
+          <div class="menu-divider" style="width:1px; height:24px; background:var(--border); margin:0 8px;"></div>
+          
+          <!-- Profile Drop Card -->
+          <div class="nav-user-profile" id="userProfileDrop">
+            <div class="user-avatar" id="navAvatarInitials">ق</div>
+            <div class="user-details">
+              <span class="username" style="max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">تحميل...</span>
+              <span class="user-role">الصلاحية: مسؤول</span>
+            </div>
+            <i class="fa-solid fa-chevron-down" style="font-size:0.72rem; color:var(--text-muted); margin-right:4px;"></i>
+            
+            <!-- Dropdown Menu -->
+            <div class="nav-dropdown-menu" id="profileDropdown">
+              <a href="profile.html"><i class="fa-solid fa-user-md"></i> حسابي الشخصي</a>
+              <a href="finance.html"><i class="fa-solid fa-coins"></i> إدارة المالية</a>
+              <div class="menu-divider"></div>
+              <button id="sidebarLogoutBtn" class="logout-item"><i class="fa-solid fa-power-off"></i> تسجيل الخروج المعتمد</button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Main Page Scrollable Container -->
+      <main class="page-container">
+        
+        <!-- Welcoming Alert Banner -->
+        <header class="page-header">
+          <div class="page-title-group">
+            <h1 id="welcomeManager">أهلاً ومرحباً بك قيادتنا الموقرة...</h1>
+            <p id="managerRole" style="font-weight: 600; color: var(--text-secondary); margin-top:4px;">جاري سحب الصلاحيات الإدارية وتوثيق الدورة السحابية الأمنية المفتوحة...</p>
+          </div>
+        </header>
+
+        <!-- ==============================================
+             SECTION 1: ANALYTICS & DASHBOARD (Analytics)
+             ============================================== -->
+        <section id="analyticsSection" class="fade-in" style="display: block;">
+          <!-- 12-Column Grid for KPI Cards -->
+          <div class="grid-container" style="margin-bottom: var(--space-lg);">
+            <!-- KPI Patients -->
+            <div class="col-3 col-lg-6 col-sm-12">
+              <div class="hms-card admin-stats-card">
+                <div class="kpi-card-header">
+                  <span class="kpi-card-title">إجمالي الحالات والمستفيدين</span>
+                  <div class="kpi-card-icon"><i class="fa-solid fa-hospital-user"></i></div>
+                </div>
+                <div class="kpi-card-value font-en">1,248</div>
+                <div class="kpi-card-footer">
+                  <span class="trend-indicator trend-up"><i class="fa-solid fa-caret-up"></i> +14.2%</span>
+                  <span class="trend-text">منذ الشهر الماضي</span>
+                </div>
+              </div>
+            </div>
+            <!-- KPI Doctors/Personnel -->
+            <div class="col-3 col-lg-6 col-sm-12">
+              <div class="hms-card admin-stats-card card-alt-1">
+                <div class="kpi-card-header">
+                  <span class="kpi-card-title">قاعدة المتطوعين الإجمالية</span>
+                  <div class="kpi-card-icon"><i class="fa-solid fa-user-nurse"></i></div>
+                </div>
+                <div class="kpi-card-value font-en" id="totalUsersStat">0 حساب</div>
+                <div class="kpi-card-footer">
+                  <span class="trend-indicator trend-up"><i class="fa-solid fa-caret-up"></i> +8.5%</span>
+                  <span class="trend-text">حسابات نشطة بالمنصة</span>
+                </div>
+              </div>
+            </div>
+            <!-- KPI Appointments -->
+            <div class="col-3 col-lg-6 col-sm-12">
+              <div class="hms-card admin-stats-card card-alt-2">
+                <div class="kpi-card-header">
+                  <span class="kpi-card-title">ساعات الإنجاز الإنساني</span>
+                  <div class="kpi-card-value font-en" id="totalHoursStat" style="font-size:1.6rem; margin-top:8px; margin-bottom:8px;">0 ساعة</div>
+                </div>
+                <div class="kpi-card-footer">
+                  <span class="trend-indicator trend-up"><i class="fa-solid fa-caret-up"></i> +2,150</span>
+                  <span class="trend-text">ساعات مستحقة ومودعة</span>
+                </div>
+              </div>
+            </div>
+            <!-- KPI Revenue -->
+            <div class="col-3 col-lg-6 col-sm-12">
+              <div class="hms-card admin-stats-card card-alt-3">
+                <div class="kpi-card-header">
+                  <span class="kpi-card-title">الفرص الميدانية الإجمالية</span>
+                  <div class="kpi-card-value font-en" id="totalInitsStat" style="font-size:1.6rem; margin-top:8px; margin-bottom:8px;">0 مبادرة</div>
+                </div>
+                <div class="kpi-card-footer">
+                  <span class="trend-indicator trend-up"><i class="fa-solid fa-circle-check"></i> نشطة ومؤرشفة</span>
+                  <span class="trend-text">بمختلف التخصصات والفرق</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts and Analytics row -->
+          <div class="grid-container" style="margin-bottom: var(--space-lg);">
+            <!-- Appointment Trend Chart -->
+            <div class="col-8 col-lg-12">
+              <div class="hms-section">
+                <h2 class="hms-section-title"><i class="fa-solid fa-chart-area"></i> تحليل الأنشطة والفرص التطوعية (شهرياً)</h2>
+                <div style="position: relative; height: 320px;">
+                  <canvas id="appointmentsTrendChart"></canvas>
+                </div>
+              </div>
+            </div>
+            <!-- Recent Activity & Performances -->
+            <div class="col-4 col-lg-12">
+              <div class="hms-section" style="height: calc(100% - 16px);">
+                <h2 class="hms-section-title"><i class="fa-solid fa-business-time"></i> معدلات إنجاز اللجان الميدانية</h2>
+                <div style="display:flex; flex-direction:column; gap:16px;">
+                  <div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.82rem; font-weight:700; margin-bottom:4px;">
+                      <span>القسم الصحي والعيادات الميدانية</span>
+                      <span class="font-en">85%</span>
+                    </div>
+                    <div class="progress-container"><div class="progress-bar" style="width: 85%;"></div></div>
+                  </div>
+                  <div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.82rem; font-weight:700; margin-bottom:4px;">
+                      <span>القسم التنظيمي وحشود الفعاليات</span>
+                      <span class="font-en">92%</span>
+                    </div>
+                    <div class="progress-container"><div class="progress-bar" style="width: 92%; background: linear-gradient(90deg, var(--warning) 0%, #D97706 100%);"></div></div>
+                  </div>
+                  <div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.82rem; font-weight:700; margin-bottom:4px;">
+                      <span>الإعلام والتغطيات الأكاديمية</span>
+                      <span class="font-en">68%</span>
+                    </div>
+                    <div class="progress-container"><div class="progress-bar" style="width: 68%; background: linear-gradient(90deg, var(--accent) 0%, #0891B2 100%);"></div></div>
+                  </div>
+                  <div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.82rem; font-weight:700; margin-bottom:4px;">
+                      <span>قسم التصميم والهوية البصرية</span>
+                      <span class="font-en">75%</span>
+                    </div>
+                    <div class="progress-container"><div class="progress-bar" style="width: 75%; background: linear-gradient(90deg, var(--danger) 0%, #B91C1C 100%);"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Deep Analytics Trigger -->
+          <div class="hms-section">
+            <h2 class="hms-section-title"><i class="fa-solid fa-database"></i> معالجة السجلات والتحليل القيادي الشامل</h2>
+            <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:16px;">قم بتحديث تقارير التوزيع الإداري وساعات الكوادر الإجمالية المعتمدة بضغطة واحدة من السحابة.</p>
+            <button onclick="window.generateAnalyticsReport()" class="btn-hms btn-primary">
+              <i class="fa-solid fa-chart-bar"></i> تحديث تقرير الأداء القيادي
+            </button>
+            <div id="analyticsReportContainer" style="display: none; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px;"></div>
+          </div>
+        </section>
+
+        <!-- ==============================================
+             SECTION 2: HUMAN RESOURCES (HR & Registry)
+             ============================================== -->
+        <section id="usersManagementSection" class="fade-in" style="display: none;">
+          <div class="hms-section">
+            <h2 class="hms-section-title"><i class="fa-solid fa-users-gear"></i> إدارة الموارد البشرية والكوادر الطبية</h2>
+            
+            <div class="accordion-item open">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-crown" style="margin-left: 8px;"></i> الكادر الإداري العام واللجان القيادية</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <div class="users-table-wrapper">
+                  <table class="users-table">
+                    <thead>
+                      <tr>
+                        <th>الاسم والبريد الإداري</th>
+                        <th>الرتبة واللجنة</th>
+                        <th>الصلاحيات والوصول للمنصات</th>
+                        <th>إجراءات الإدارة</th>
+                      </tr>
+                    </thead>
+                    <tbody id="leadersTableBody">
+                      <tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">جاري سحب جداول الكادر القيادي...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-user-nurse" style="margin-left: 8px;"></i> قاعدة بيانات الأعضاء والمتطوعين الميدانيين</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <!-- Search & Manual Hours adjustment panel -->
+                <div class="table-controls">
+                  <div class="table-search-box">
+                    <input type="text" id="volunteerSearchInput" class="table-search-input" placeholder="ابحث باسم المتطوع أو بريده..." onkeyup="window.filterVolunteersTable()">
+                    <i class="fa-solid fa-magnifying-glass" style="position:absolute; top:50%; left:12px; transform:translateY(-50%); color:var(--text-muted);"></i>
+                  </div>
+                  
+                  <div class="table-actions-left" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <input type="text" id="quickHourId" class="form-control" placeholder="معرف الهوية أو البريد" style="max-width:180px; padding: 7px 12px; font-size:0.85rem;">
+                    <input type="number" id="quickHourValue" class="form-control" placeholder="الساعات المضافة يدوياً" style="max-width:140px; padding: 7px 12px; font-size:0.85rem;">
+                    <button class="btn-hms btn-primary btn-sm" onclick="window.addHoursQuick()">
+                      <i class="fa-solid fa-clock"></i> إيداع الساعات
+                    </button>
+                  </div>
+                </div>
+
+                <div class="users-table-wrapper">
+                  <table class="users-table">
+                    <thead>
+                      <tr>
+                        <th>اسم المتطوع والبريد الإلكتروني</th>
+                        <th>إجمالي الساعات</th>
+                        <th>اللجان التخصصية للمتطوع</th>
+                        <th>أدوات الإدارة والتحكم</th>
+                      </tr>
+                    </thead>
+                    <tbody id="volunteersTableBody">
+                      <tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">جاري سحب جداول المتطوعين الميدانيين...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- New Department Applications -->
+            <div class="accordion-item" id="deptAppsBlock" style="display:none;">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-envelope-open-text" style="margin-left: 8px;"></i> طلبات انضمام الكوادر الطبية والإدارية للجان الأقسام</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <div class="users-table-wrapper">
+                  <table class="users-table">
+                    <thead>
+                      <tr>
+                        <th>اسم المتقدم وبيانات الاتصال</th>
+                        <th>القسم أو اللجنة المستهدفة</th>
+                        <th>التخصص والمهارة الحالية</th>
+                        <th>الخبرات السابقة الموثقة</th>
+                        <th>الإجراء التنظيمي للطلب</th>
+                      </tr>
+                    </thead>
+                    <tbody id="deptAppsTableBody">
+                      <tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">لا توجد طلبات معلقة مسجلة بالنظام حالياً.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+        </section>
+
+        <!-- ==============================================
+             SECTION 3: INITIATIVES MANAGEMENT (Initiatives)
+             ============================================== -->
+        <section id="initiativesManagementSection" class="fade-in" style="display: none;">
+          <div class="hms-section">
+            <h2 class="hms-section-title"><i class="fa-solid fa-hand-holding-medical"></i> إدارة الفرص الطبية والمبادرات الميدانية</h2>
+            
+            <!-- Accordion Create Initiative -->
+            <div class="accordion-item open" id="initiativesBlock" style="display:none;">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-file-medical" style="margin-left: 8px;"></i> إضافة وإعلان مبادرة أو فرصة تطوعية جديدة</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <div class="grid-container">
+                  <div class="col-6 col-md-12">
+                    <div class="form-group">
+                      <label for="initName">اسم الفرصة الميدانية</label>
+                      <input type="text" id="initName" class="form-control" placeholder="مثال: القافلة الصحية للعيون بمحافظة عسير">
+                    </div>
+                  </div>
+                  <div class="col-3 col-md-6 col-sm-12">
+                    <div class="form-group">
+                      <label for="initHours">الساعات المعتمدة</label>
+                      <input type="number" id="initHours" class="form-control font-en" placeholder="مثال: 8">
+                    </div>
+                  </div>
+                  <div class="col-3 col-md-6 col-sm-12">
+                    <div class="form-group">
+                      <label for="initCapacity">السعة المتاحة (اختياري)</label>
+                      <input type="number" id="initCapacity" class="form-control font-en" placeholder="الحد الأقصى للتسجيل">
+                    </div>
+                  </div>
+                  <div class="col-4 col-md-6 col-sm-12">
+                    <div class="form-group">
+                      <label for="initDate">تاريخ الفعالية</label>
+                      <input type="date" id="initDate" class="form-control font-en">
+                    </div>
+                  </div>
+                  <div class="col-8 col-md-6 col-sm-12">
+                    <div class="form-group">
+                      <label for="initRoles">المهام المطلوبة (افصل بينها بـ علامة "،")</label>
+                      <input type="text" id="initRoles" class="form-control" placeholder="طبيب عام، ممرض، منظم حشود، مصور إعلامي...">
+                    </div>
+                  </div>
+                </div>
+                <div style="text-align:left; margin-top:10px;">
+                  <button onclick="window.addInitiative()" class="btn-hms btn-primary">
+                    <i class="fa-solid fa-plus-circle"></i> بث ونشر المبادرة فوراً
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Initiatives -->
+            <div class="accordion-item" id="activeInitsBlock" style="display:none;">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-clock-rotate-left" style="margin-left: 8px;"></i> المبادرات النشطة حالياً بالنظام (تعديل - إقفال - إنهاء)</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <div class="users-table-wrapper">
+                  <table class="users-table">
+                    <thead>
+                      <tr>
+                        <th>اسم المبادرة والفرصة التطوعية</th>
+                        <th>الساعات</th>
+                        <th>القدرة الاستيعابية</th>
+                        <th>التاريخ المعتمد</th>
+                        <th>لوحة التحكم والتنفيذ</th>
+                      </tr>
+                    </thead>
+                    <tbody id="activeInitsBody">
+                      <tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">لا توجد فرص نشطة حالياً.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Archived Completed Initiatives -->
+            <div class="accordion-item" id="archiveInitsBlock" style="display:none;">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-box-archive" style="margin-left: 8px;"></i> أرشيف المبادرات المكتملة والإحصائيات النهائية</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <div class="users-table-wrapper">
+                  <table class="users-table">
+                    <thead>
+                      <tr>
+                        <th>اسم المبادرة المؤرشفة</th>
+                        <th>تاريخ الإنجاز</th>
+                        <th>إجمالي المقبولين</th>
+                        <th>إجمالي الحاضرين النهائيين</th>
+                      </tr>
+                    </thead>
+                    <tbody id="archiveInitsBody">
+                      <tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">الأرشيف فارغ حالياً.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Approvals block -->
+            <div class="accordion-item" id="approvalBlock" style="display:none;">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-stamp" style="margin-left: 8px;"></i> فرز ومراجعة طلبات تسجيل المتطوعين بالفرص</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <div class="form-group" style="max-width:400px; margin-bottom: 20px;">
+                  <label for="approvalInitSelect">حدد الفرصة لعرض المتقدمين الكلي</label>
+                  <select id="approvalInitSelect" class="form-control" onchange="window.loadPendingRegistrations()">
+                    <option value="">جاري جلب قائمة المبادرات...</option>
+                  </select>
+                </div>
+                
+                <div class="users-table-wrapper">
+                  <table class="users-table">
+                    <thead>
+                      <tr>
+                        <th>الاسم الكامل للمتطوع</th>
+                        <th>المهام المطلوبة منه بالفعالية</th>
+                        <th>قرار الاعتماد والقبول</th>
+                      </tr>
+                    </thead>
+                    <tbody id="approvalListBody">
+                      <tr><td colspan="3" style="text-align:center; padding:20px; color:var(--text-muted);">يرجى تحديد المبادرة المستهدفة لعرض كشوفات الأعضاء المتقدمين...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Attendance block -->
+            <div class="accordion-item" id="attendanceBlock" style="display:none;">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-clipboard-user" style="margin-left: 8px;"></i> رصد حضور وغياب المتطوعين ميدانياً</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <div class="form-group" style="max-width:400px; margin-bottom: 20px;">
+                  <label for="attendanceInitSelect">حدد الفرصة لبدء التحضير</label>
+                  <select id="attendanceInitSelect" class="form-control" onchange="window.loadAttendanceList()">
+                    <option value="">جاري جلب القائمة...</option>
+                  </select>
+                </div>
+                
+                <div class="users-table-wrapper">
+                  <table class="users-table">
+                    <thead>
+                      <tr>
+                        <th>اسم المتطوع والهوية الوطنية</th>
+                        <th>المهام المعتمدة</th>
+                        <th>حالة الحضور الحالية</th>
+                        <th>رصد التحضير الفوري</th>
+                      </tr>
+                    </thead>
+                    <tbody id="attendanceListBody">
+                      <tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">يرجى تحديد المبادرة من القائمة أعلاه لبدء التحضير...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ==============================================
+             SECTION 4: OPERATIONS & EXPPORTING (Operations)
+             ============================================== -->
+        <section id="operationsSection" class="fade-in" style="display: none;">
+          <div class="hms-section">
+            <h2 class="hms-section-title"><i class="fa-solid fa-screwdriver-wrench"></i> العمليات والتقارير الإدارية</h2>
+
+            <!-- Batch Hours Deposition -->
+            <div class="accordion-item open" id="batchApproveBlock" style="display:none;">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-fill-drip" style="margin-left: 8px;"></i> الإيداع الكلي وضخ الساعات التطوعية للحاضرين</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <p style="color:var(--text-secondary); font-size:0.88rem; margin-bottom:16px; line-height:1.6;">
+                  تنبيه أمان: هذه الخطوة لا يمكن التراجع عنها. ستقوم بإيداع الساعات المعتمدة في المبادرة لحسابات كافة الأعضاء الذين تم تحضيرهم كـ <strong>حاضر</strong> بشكل جماعي فوري.
+                </p>
+                <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end;">
+                  <div class="form-group" style="flex:1; min-width:280px; margin-bottom:0;">
+                    <label for="batchApproveSelect">اختر المبادرة المستهدفة للإيداع</label>
+                    <select id="batchApproveSelect" class="form-control">
+                      <option value="">اختر المبادرة...</option>
+                    </select>
+                  </div>
+                  <button onclick="window.batchApproveHours()" class="btn-hms btn-primary" style="height:44px;">
+                    <i class="fa-solid fa-circle-check"></i> بدء إيداع الساعات الجماعي
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Export Registrations -->
+            <div class="accordion-item" id="exportBlock" style="display:none;">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-file-export" style="margin-left: 8px;"></i> استخراج كشوفات المتطوعين لمصنف Excel أو ملفات الطباعة</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <p style="color:var(--text-secondary); font-size:0.88rem; margin-bottom:16px;">
+                  اختر الفرصة الميدانية لتصدير سجلات الأعضاء المتقدمين مع أرقام هواتفهم وتخصصاتهم وحالة حضورهم.
+                </p>
+                <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end; margin-bottom:14px;">
+                  <div class="form-group" style="flex:1; min-width:280px; margin-bottom:0;">
+                    <label for="exportInitNameSelect">المبادرة المستهدفة للاستخراج</label>
+                    <select id="exportInitNameSelect" class="form-control">
+                      <option value="">اختر المبادرة...</option>
+                    </select>
+                  </div>
+                  <button onclick="window.exportRegistrationsToCSV()" class="btn-hms btn-excel" style="height:44px;">
+                    <i class="fa-solid fa-file-excel"></i> تصدير Excel
+                  </button>
+                  <button onclick="window.exportRegistrationsToPDF()" class="btn-hms btn-pdf" style="height:44px;">
+                    <i class="fa-solid fa-file-pdf"></i> تصدير PDF للطباعة
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Announcements -->
+            <div class="accordion-item" id="announceBlock" style="display:none;">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-bullhorn" style="margin-left: 8px;"></i> بث التعاميم والبيانات الإدارية بلوحة المتطوعين</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <div class="form-group">
+                  <label for="announceText">نص البيان أو التعميم العاجل</label>
+                  <textarea id="announceText" class="form-control" placeholder="اكتب هنا البيان المراد نشره في الشريط الإعلاني المباشر للمتطوعين..." style="min-height:100px;"></textarea>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:8px;">
+                  <button onclick="window.clearAnnouncement()" class="btn-hms btn-outline">إلغاء ومسح البيان</button>
+                  <button onclick="window.sendAnnounce()" class="btn-hms btn-primary">بث ونشر البيان الآن</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Field Reports Section -->
+            <div class="accordion-item" id="submitReportBlock" style="display:none;">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-file-circle-check" style="margin-left: 8px;"></i> رفع التقرير الميداني لقسمكم للإدارة العليا</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <div class="form-group">
+                  <label for="deptReportInput">اكتب تفاصيل التقرير الميداني للقسم الخاص بكم</label>
+                  <textarea id="deptReportInput" class="form-control" placeholder="مثال: تم إنجاز الفعالية بحضور 40 متطوع وتقديم الفحوصات لـ 200 مستفيد..." style="min-height:120px;"></textarea>
+                </div>
+                <div style="text-align:left;">
+                  <button onclick="window.submitDepartmentReport()" class="btn-hms btn-primary">إرسال التقرير للإدارة العليا</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- View Reports -->
+            <div class="accordion-item" id="viewReportsBlock" style="display:none;">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-folder-open" style="margin-left: 8px;"></i> سجل وأرشيف تقارير الأقسام واللجان المرفوعة</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <div style="text-align:left; margin-bottom:12px;">
+                  <button onclick="window.downloadAllReports()" class="btn-hms btn-outline btn-sm">
+                    <i class="fa-solid fa-download"></i> تحميل جميع التقارير كملف نصي
+                  </button>
+                </div>
+                <div class="users-table-wrapper">
+                  <table class="users-table">
+                    <thead>
+                      <tr>
+                        <th>الجهة المرسلة</th>
+                        <th>نص التقرير الإداري</th>
+                        <th>تاريخ الإرسال</th>
+                        <th>خيارات الحذف</th>
+                      </tr>
+                    </thead>
+                    <tbody id="reportsTableBody">
+                      <tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">لا توجد أي تقارير ميدانية مرفوعة حالياً.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Blacklist Registry -->
+            <div class="accordion-item">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-ban" style="margin-left: 8px;"></i> القائمة السوداء للهويات الوطنية الموقوفة</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <div class="grid-container" style="margin-bottom:16px;">
+                  <div class="col-5 col-md-12">
+                    <div class="form-group">
+                      <label for="banIdInput">رقم الهوية الوطنية / الإقامة المستهدفة</label>
+                      <input type="number" id="banIdInput" class="form-control font-en" placeholder="مثال: 1xxxxxxxxx">
+                    </div>
+                  </div>
+                  <div class="col-7 col-md-12">
+                    <div class="form-group">
+                      <label for="banReasonInput">سبب الإيقاف القانوني المباشر</label>
+                      <input type="text" id="banReasonInput" class="form-control" placeholder="مثال: مخالفة سياسات التوثيق الطبي">
+                    </div>
+                  </div>
+                </div>
+                <div style="text-align:left; margin-bottom:20px;">
+                  <button onclick="window.banVolunteer()" class="btn-hms btn-danger">إدراج في القائمة وحظر الهوية</button>
+                </div>
+                
+                <h4 style="color:var(--text-secondary); margin-bottom:10px; font-size:0.9rem;">الهويات الموقوفة حالياً:</h4>
+                <div class="users-table-wrapper" style="max-height:300px; overflow-y:auto;">
+                  <table class="users-table">
+                    <thead>
+                      <tr>
+                        <th>رقم الهوية الوطنية المحظورة وسبب الإجراء</th>
+                        <th>رفع الحظر الفوري</th>
+                      </tr>
+                    </thead>
+                    <tbody id="bannedTableBody">
+                      <tr><td colspan="2" style="text-align:center; padding:20px; color:var(--text-muted);">القائمة السوداء نظيفة.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Export Department Members -->
+            <div class="accordion-item">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-users" style="margin-left: 8px;"></i> استخراج سجل كوادر الأقسام المعتمدين</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end;">
+                  <div class="form-group" style="flex:1; min-width:280px; margin-bottom:0;">
+                    <label for="exportDeptSelect">اختر اللجنة أو القسم المطلوب تصديره</label>
+                    <select id="exportDeptSelect" class="form-control">
+                      <option value="">اختر القسم...</option>
+                      <option value="all">جميع الأقسام واللجان المعتمدة</option>
+                      <option value="media">القسم الإعلامي</option>
+                      <option value="org">القسم التنظيمي</option>
+                      <option value="health">القسم الصحي</option>
+                      <option value="sci">القسم العلمي</option>
+                      <option value="mark">القسم التسويقي</option>
+                      <option value="design">قسم التصميم الفني</option>
+                      <option value="legal">القسم القانوني والحوكمة</option>
+                    </select>
+                  </div>
+                  <button onclick="window.exportDeptMembersToCSV()" class="btn-hms btn-excel" style="height:44px;">
+                    <i class="fa-solid fa-file-excel"></i> تصدير كشف الكوادر
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Support Messages -->
+            <div class="accordion-item" id="supportTicketsBlock" style="display:none;">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-envelope-open-text" style="margin-left: 8px;"></i> تذاكر ورسائل الدعم الفني الواردة من المتطوعين</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <div class="users-table-wrapper">
+                  <table class="users-table">
+                    <thead>
+                      <tr>
+                        <th>الجهة المرسلة وتوقيتها</th>
+                        <th>نص رسالة الدعم المرفوعة</th>
+                        <th>إغلاق وحذف بلاغ المشكلة</th>
+                      </tr>
+                    </thead>
+                    <tbody id="supportTicketsBody">
+                      <tr><td colspan="3" style="text-align:center; padding:20px; color:var(--text-muted);">صندوق الدعم فارغ ولا توجد أي مشاكل معلقة.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ==============================================
+             SECTION 5: SYSTEM & CMS CONFIGURATION (Cms)
+             ============================================== -->
+        <section id="cmsSection" class="fade-in" style="display: none;">
+          <div class="hms-section">
+            <h2 class="hms-section-title"><i class="fa-solid fa-desktop"></i> تعديل محتوى النظام وواجهة الموقع الرئيسي</h2>
+
+            <!-- Album Gallery settings -->
+            <div class="accordion-item open">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-images" style="margin-left: 8px;"></i> إدارة ألبوم صور فريق برلين (للمعرض بالصفحة العامة)</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <div class="grid-container" style="margin-bottom:16px;">
+                  <div class="col-6 col-md-12">
+                    <div class="form-group">
+                      <label for="albumImgFile">اختر الصورة من البوم الكاميرا / ملفات الجهاز</label>
+                      <input type="file" id="albumImgFile" accept="image/*" class="form-control">
+                    </div>
+                  </div>
+                  <div class="col-6 col-md-12">
+                    <div class="form-group">
+                      <label for="albumCaption">عنوان الصورة أو المناسبة الميدانية</label>
+                      <input type="text" id="albumCaption" class="form-control" placeholder="مثال: القافلة الطبية بالشرقية 2026">
+                    </div>
+                  </div>
+                </div>
+                <div style="text-align:left; margin-bottom:20px; display:flex; align-items:center; gap:12px;">
+                  <button onclick="window.addAlbumImage()" class="btn-hms btn-primary">إضافة وبث الصورة للواجهة</button>
+                  <span id="albumUploadProgress" style="font-size:0.88rem; color:var(--primary); font-weight:700;"></span>
+                </div>
+                
+                <h4 style="color:var(--text-secondary); margin-bottom:10px; font-size:0.9rem;">الصور المفعلة حالياً بالألبوم:</h4>
+                <div class="users-table-wrapper" style="max-height:350px; overflow-y:auto;">
+                  <table class="users-table">
+                    <thead>
+                      <tr>
+                        <th>الصورة</th>
+                        <th>الوصف والوسم</th>
+                        <th>أمر الحذف</th>
+                      </tr>
+                    </thead>
+                    <tbody id="albumTableBody">
+                      <tr><td colspan="3" style="text-align:center; padding:20px; color:var(--text-muted);">جاري جلب ألبوم الصور الميدانية...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Home Page Landing Text Content Settings -->
+            <div class="accordion-item">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-house-chimney-medical" style="margin-left: 8px;"></i> تعديل نصوص السلايدر وقصة الفريق بالواجهة الرئيسية</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <div class="hms-section" style="margin-bottom:20px; background:var(--background); padding:16px;">
+                  <h4 style="font-size:0.95rem; font-weight:800; color:var(--primary); margin-bottom:14px;"><i class="fa-solid fa-plus-circle"></i> إضافة شريحة عرض (سلايدر) جديدة بالصفحة الرئيسية</h4>
+                  <div class="grid-container">
+                    <div class="col-4 col-md-12">
+                      <div class="form-group">
+                        <label for="slideTitle">عنوان الشريحة</label>
+                        <input type="text" id="slideTitle" class="form-control" placeholder="مثال: تأمين حشود الفعاليات">
+                      </div>
+                    </div>
+                    <div class="col-4 col-md-12">
+                      <div class="form-group">
+                        <label for="slideDesc">الوصف التفصيلي للشريحة</label>
+                        <textarea id="slideDesc" class="form-control" style="min-height:90px;" placeholder="مثال: تغطية إسعافية متكاملة لخدمة المشاركين وزوار الفعاليات"></textarea>
+                      </div>
+                    </div>
+                    <div class="col-4 col-md-12">
+                      <div class="form-group">
+                        <label for="slideImgFile">اختر صورة الشريحة من البوم الكاميرا / الجهاز</label>
+                        <input type="file" id="slideImgFile" accept="image/*" class="form-control">
+                      </div>
+                    </div>
+                  </div>
+                  <div style="text-align:left; margin-top:10px; display:flex; align-items:center; gap:12px;">
+                    <button onclick="window.addSlideshowSlide()" class="btn-hms btn-primary btn-sm"><i class="fa-solid fa-plus"></i> إضافة وبث الشريحة للسلايدر</button>
+                    <span id="slideUploadProgress" style="font-size:0.85rem; color:var(--primary); font-weight:700;"></span>
+                  </div>
+                </div>
+
+                <h4 style="color:var(--text-secondary); margin-bottom:10px; font-size:0.9rem;">الشرائح النشطة حالياً بالسلايدر:</h4>
+                <div class="users-table-wrapper" style="max-height:280px; overflow-y:auto; margin-bottom:24px;">
+                  <table class="users-table">
+                    <thead>
+                      <tr>
+                        <th>الصورة</th>
+                        <th>العنوان والبيان</th>
+                        <th>أمر الحذف</th>
+                      </tr>
+                    </thead>
+                    <tbody id="slideshowTableBody">
+                      <tr><td colspan="3" style="text-align:center; padding:15px; color:var(--text-muted);">جاري جلب شرائح العرض...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="grid-container" style="border-top:1px solid var(--border); padding-top:20px;">
+                  <div class="col-6 col-md-12">
+                    <div class="form-group">
+                      <label for="affilText">أقسام وشراكات الفريق المعتمدة (الشركاء والجهات)</label>
+                      <textarea id="affilText" class="form-control" style="min-height:120px;" placeholder="اكتب الشركاء والاعتمادات الرسمية هنا..."></textarea>
+                    </div>
+                  </div>
+                  <div class="col-6 col-md-12">
+                    <div class="form-group">
+                      <label for="aboutText">قصة ورسالة فريق برلين الطبي (تظهر الفقرة الأولى كرسالة مميزة تليها مسيرة الفريق)</label>
+                      <textarea id="aboutText" class="form-control" style="min-height:120px;" placeholder="اكتب قصة ورسالة الفريق هنا (الفقرة الأولى ستظهر في صندوق ملون مميز للرسالة والرؤية)..."></textarea>
+                    </div>
+                  </div>
+                </div>
+                <div style="text-align:left; margin-top:10px;">
+                  <button onclick="window.saveGeneralCMSData()" class="btn-hms btn-success"><i class="fa-solid fa-floppy-disk"></i> حفظ نصوص الموقع العامة</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Volunteer portal dashboard Link and cert parameters settings -->
+            <div class="accordion-item">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-user-gear" style="margin-left: 8px;"></i> تخصيص نصوص وتعاميم لوحة المتطوعين الداخلية</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <div class="form-group">
+                  <label for="dashGuideLink">رابط الدليل واللوائح التنظيمية للمتطوع (URL)</label>
+                  <input type="text" id="dashGuideLink" class="form-control font-en" placeholder="رابط دليل العمل التطوعي المعتمد">
+                </div>
+                <div class="form-group">
+                  <label for="dashCertNote">ملاحظات وشهادات المتطوع (نصوص الشرح في لوحة الشهادات)</label>
+                  <textarea id="dashCertNote" class="form-control" placeholder="اكتب الملاحظة التي تظهر للمتطوعين أسفل كشوفات الشهادات..." style="min-height:70px;"></textarea>
+                </div>
+                <div style="text-align:left;">
+                  <button onclick="window.saveDashCMS()" class="btn-hms btn-primary">حفظ الإعدادات الداخلية</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Issue Volunteer Certificates Form -->
+            <div class="accordion-item" id="certificatesBlock" style="display:none;">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-award" style="margin-left: 8px;"></i> إصدار ورفع شهادة شكر وتقدير للمتطوع</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <div class="grid-container">
+                  <div class="col-4 col-md-12">
+                    <div class="form-group">
+                      <label for="certUserEmail">البريد الإلكتروني للمتطوع</label>
+                      <input type="email" id="certUserEmail" class="form-control font-en" placeholder="name@example.com">
+                    </div>
+                  </div>
+                  <div class="col-4 col-md-12">
+                    <div class="form-group">
+                      <label for="certTitle">عنوان أو اسم المبادرة / الشهادة</label>
+                      <input type="text" id="certTitle" class="form-control" placeholder="مثال: شهادة شكر لمبادرة القافلة الصحية">
+                    </div>
+                  </div>
+                  <div class="col-4 col-md-12">
+                    <div class="form-group">
+                      <label for="certLink">رابط ملف الشهادة المباشر (PDF / Image URL)</label>
+                      <input type="text" id="certLink" class="form-control font-en" placeholder="https://example.com/certificate.pdf">
+                    </div>
+                  </div>
+                </div>
+                <div style="text-align:left; margin-top:10px;">
+                  <button onclick="window.sendCertificate()" class="btn-hms btn-primary">اعتماد وإرسال الشهادة لحساب المتطوع</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Honors Board Settings -->
+            <div class="accordion-item">
+              <div class="accordion-item-header" onclick="window.toggleAccordionItem(this)">
+                <span><i class="fa-solid fa-medal" style="margin-left: 8px;"></i> لوحة الشرف السنوية وقائمة المراتب الثلاث الأولى</span>
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+              </div>
+              <div class="accordion-item-content">
+                <p style="color:var(--text-secondary); font-size:0.88rem; margin-bottom:16px;">
+                  يمكنك استقطاب وفحص المراتب الثلاث الأولى بشكل آلي من قاعدة بيانات الساعات للمتطوعين أو تعديلها يدوياً لحفظ لوحة الشرف في واجهة الموقع.
+                </p>
+                <div style="text-align:left; margin-bottom:20px;">
+                  <button onclick="window.autoCalculateLeaderboard()" class="btn-hms btn-outline btn-sm">
+                    <i class="fa-solid fa-calculator"></i> فرز وجلب المراتب آلياً
+                  </button>
+                </div>
+                
+                <div class="grid-container">
+                  <!-- Rank 1 -->
+                  <div class="col-4 col-md-12">
+                    <div class="hms-section" style="padding:14px; background:var(--background); border-color:#FFD700;">
+                      <h4 style="font-size:0.9rem; margin-bottom:10px; color:#FFD700;"><i class="fa-solid fa-trophy"></i> المرتبة الأولى (الذهبية)</h4>
+                      <div class="form-group">
+                        <label>الاسم الكامل</label>
+                        <input type="text" id="top1Name" class="form-control">
+                      </div>
+                      <div class="form-group">
+                        <label>عدد الساعات</label>
+                        <input type="number" id="top1Hours" class="form-control font-en">
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Rank 2 -->
+                  <div class="col-4 col-md-12">
+                    <div class="hms-section" style="padding:14px; background:var(--background); border-color:#C0C0C0;">
+                      <h4 style="font-size:0.9rem; margin-bottom:10px; color:#C0C0C0;"><i class="fa-solid fa-trophy"></i> المرتبة الثانية (الفضية)</h4>
+                      <div class="form-group">
+                        <label>الاسم الكامل</label>
+                        <input type="text" id="top2Name" class="form-control">
+                      </div>
+                      <div class="form-group">
+                        <label>عدد الساعات</label>
+                        <input type="number" id="top2Hours" class="form-control font-en">
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Rank 3 -->
+                  <div class="col-4 col-md-12">
+                    <div class="hms-section" style="padding:14px; background:var(--background); border-color:#CD7F32;">
+                      <h4 style="font-size:0.9rem; margin-bottom:10px; color:#CD7F32;"><i class="fa-solid fa-trophy"></i> المرتبة الثالثة (البرونزية)</h4>
+                      <div class="form-group">
+                        <label>الاسم الكامل</label>
+                        <input type="text" id="top3Name" class="form-control">
+                      </div>
+                      <div class="form-group">
+                        <label>عدد الساعات</label>
+                        <input type="number" id="top3Hours" class="form-control font-en">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div style="text-align:left; margin-top:10px;">
+                  <button onclick="window.saveLeaderboard()" class="btn-hms btn-primary">نشر واعتماد لوحة الشرف للموقع</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </main>
+      
+      <!-- Footer -->
+      <footer style="margin-top:auto; padding:24px; text-align:center; border-top:1px solid var(--border); background:var(--surface); font-size:0.85rem; color:var(--text-secondary);">
+        <p>© 2026 فريق برلين الطبي التطوعي. كافة الحقوق محفوظة للنظام الإداري الموحد.</p>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Timeout Warning Dialog Modal -->
+  <div class="modal-overlay" id="timeoutModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title" style="color:var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> تنبيه الخمول الأمني</h3>
+      </div>
+      <div class="modal-body">
+        <p style="line-height:1.6;">
+          حفاظاً على أمن السجلات والبيانات الطبية، سيتم إنهاء هذه الجلسة الإدارية بسبب الخمول في غضون:
+        </p>
+        <span class="countdown-timer" id="countdownText">30</span>
+        <p style="text-align:center; font-weight:700;">ثانية متبقية</p>
+      </div>
+      <div class="modal-footer" style="justify-content:center;">
+        <button class="btn-hms btn-primary" onclick="window.stayLoggedIn()" style="width:100%; padding:11px;">
+          <i class="fa-solid fa-circle-check"></i> أنا هنا، تمديد الجلسة الإدارية
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Float Theme Switcher -->
+  <button id="themeToggle" class="theme-toggle-btn" aria-label="تبديل الثيم"><i class="fa-solid fa-sun"></i></button>
+
+  <!-- Firebase Compat Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+  <script>
+    // Firebase initialization config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAObqy7xz2BFlSCEJED7ZjWgPwyM5fQOqU",
+      authDomain: "berlinteamapp.firebaseapp.com",
+      projectId: "berlinteamapp",
+      storageBucket: "berlinteamapp.appspot.com",
+      messagingSenderId: "986675866046",
+      appId: "1:986675866046:web:15bb3e179762e5aef0f1ef"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+    db.enablePersistence().catch(err => console.warn("Firestore Persistence Error:", err.code));
+
+    // Firebase polyfills layer
+    const doc = (dbRef, col, id) => dbRef.collection(col).doc(id);
+    const collection = (dbRef, col) => dbRef.collection(col);
+    const wrapDoc = (docSnap) => {
+      if (!docSnap) return docSnap;
+      return {
+        exists() { return docSnap.exists; },
+        data() { return docSnap.data(); },
+        get id() { return docSnap.id; },
+        get ref() { return docSnap.ref; },
+        get(field) { return docSnap.get(field); },
+        get metadata() { return docSnap.metadata; }
+      };
+    };
+    const wrapQuerySnap = (querySnap) => {
+      if (!querySnap) return querySnap;
+      return {
+        get empty() { return querySnap.empty; },
+        get size() { return querySnap.size; },
+        get docs() { return querySnap.docs.map(d => wrapDoc(d)); },
+        get metadata() { return querySnap.metadata; },
+        forEach(callback) { querySnap.forEach(d => callback(wrapDoc(d))); }
+      };
+    };
+    const getDoc = async (docRef) => wrapDoc(await docRef.get());
+    const getDocs = async (queryRef) => wrapQuerySnap(await queryRef.get());
+    const updateDoc = (docRef, data) => docRef.update(data);
+    const setDoc = (docRef, data) => docRef.set(data);
+    const deleteDoc = (docRef) => docRef.delete();
+    const addDoc = (colRef, data) => colRef.add(data);
+    const query = (colRef, ...constraints) => {
+      let q = colRef;
+      constraints.forEach(c => { if (c && typeof c.applyToQuery === 'function') q = c.applyToQuery(q); });
+      return q;
+    };
+    const where = (field, op, val) => { return { applyToQuery: (q) => q.where(field, op, val) }; };
+    const arrayUnion = (val) => firebase.firestore.FieldValue.arrayUnion(val);
+    const writeBatch = (dbRef) => dbRef.batch();
+    const onAuthStateChanged = (authRef, callback) => authRef.onAuthStateChanged(callback);
+    const signOut = (authRef) => authRef.signOut();
+
+    let currentUserEmail = "";
+    let currentRole = "";
+    let currentPerms = [];
+
+    // Accordion item expand/collapse toggles
+    window.toggleAccordionItem = function(headerElement) {
+      const parent = headerElement.parentElement;
+      const isOpen = parent.classList.contains('open');
+      
+      // Close other accordions in the same section group if wanted
+      const container = parent.parentElement;
+      const brothers = container.querySelectorAll('.accordion-item');
+      brothers.forEach(b => {
+        if (b !== parent) b.classList.remove('open');
+      });
+      
+      if (isOpen) {
+        parent.classList.remove('open');
+      } else {
+        parent.classList.add('open');
+      }
+    };
+
+    // Sidebar toggles
+    window.toggleSidebar = function() {
+      const layout = document.querySelector('.admin-layout');
+      const sidebar = document.getElementById('adminSidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      
+      if (window.innerWidth >= 992) {
+        layout.classList.toggle('sidebar-collapsed');
+      } else {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('show');
+      }
+    };
+    document.getElementById('sidebarToggle').addEventListener('click', window.toggleSidebar);
+
+    // Direction layout switcher
+    window.toggleDirection = function() {
+      const htmlDir = document.documentElement.getAttribute('dir');
+      if (htmlDir === 'rtl') {
+        document.documentElement.setAttribute('dir', 'ltr');
+        document.documentElement.style.textAlign = 'left';
+      } else {
+        document.documentElement.setAttribute('dir', 'rtl');
+        document.documentElement.style.textAlign = '';
+      }
+    };
+
+    // Navbar Dropdown menus
+    const profileDrop = document.getElementById('userProfileDrop');
+    const profileMenu = document.getElementById('profileDropdown');
+    profileDrop.addEventListener('click', (e) => {
+      e.stopPropagation();
+      profileMenu.classList.toggle('show');
+    });
+    document.addEventListener('click', () => {
+      profileMenu.classList.remove('show');
+    });
+
+    // Accordions collapsible inside sidebar
+    const sidebarAccHeaders = document.querySelectorAll('.accordion-trigger');
+    sidebarAccHeaders.forEach(trigger => {
+      trigger.addEventListener('click', () => {
+        const content = trigger.nextElementSibling;
+        const arrow = trigger.querySelector('.arrow-icon');
+        
+        const isCurrentlyExpanded = content.classList.contains('expanded');
+        
+        // Collapse all contents first
+        document.querySelectorAll('.accordion-content').forEach(c => c.classList.remove('expanded'));
+        document.querySelectorAll('.accordion-trigger').forEach(t => t.classList.remove('active'));
+        
+        if (!isCurrentlyExpanded) {
+          content.classList.add('expanded');
+          trigger.classList.add('active');
+        }
+      });
+    });
+
+    // Tab switcher logic
+    window.switchTab = function(sectionId, menuId) {
+      const sections = ["analyticsSection", "usersManagementSection", "initiativesManagementSection", "operationsSection", "cmsSection"];
+      const menuIds = {
+        "analyticsSection": "menu-analytics",
+        "usersManagementSection": "menu-users",
+        "initiativesManagementSection": "menu-initiatives",
+        "operationsSection": "menu-operations",
+        "cmsSection": "menu-cms"
+      };
+      
+      sections.forEach(id => {
+        const el = document.getElementById(id);
+        const menuEl = document.getElementById(menuIds[id]);
+        if (el) {
+          if (id === sectionId) {
+            el.style.display = "block";
+            if (menuEl) menuEl.classList.add("active");
+          } else {
+            el.style.display = "none";
+            if (menuEl) menuEl.classList.remove("active");
+          }
+        }
+      });
+
+      // Close mobile sidebar on click
+      const sidebar = document.getElementById("adminSidebar");
+      const overlay = document.getElementById("sidebarOverlay");
+      if (sidebar && sidebar.classList.contains("open")) {
+        sidebar.classList.remove("open");
+        if (overlay) overlay.classList.remove("show");
+      }
+    };
+
+    window.initTabs = function() {
+      const sections = ["analyticsSection", "usersManagementSection", "initiativesManagementSection", "operationsSection", "cmsSection"];
+      const menuIds = {
+        "analyticsSection": "menu-analytics",
+        "usersManagementSection": "menu-users",
+        "initiativesManagementSection": "menu-initiatives",
+        "operationsSection": "menu-operations",
+        "cmsSection": "menu-cms"
+      };
+      
+      let firstVisibleSection = null;
+      
+      sections.forEach(id => {
+        const el = document.getElementById(id);
+        const menuEl = document.getElementById(menuIds[id]);
+        if (el && el.style.display === "block") {
+          if (menuEl) menuEl.style.display = "flex";
+          if (!firstVisibleSection) {
+            firstVisibleSection = id;
+          } else {
+            el.style.display = "none"; // hide others
+          }
+        } else {
+          if (menuEl) menuEl.style.display = "none";
+        }
+      });
+      
+      if (firstVisibleSection) {
+        sections.forEach(id => {
+          const menuEl = document.getElementById(menuIds[id]);
+          if (menuEl) {
+            if (id === firstVisibleSection) {
+              menuEl.classList.add("active");
+            } else {
+              menuEl.classList.remove("active");
+            }
+          }
+        });
+      }
+    };
+
+    window.closeModal = function(id) { document.getElementById(id).style.display = "none"; };
+    
+    // Auth Check
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { window.location.href = "gateway.html"; return; }
+      isUserLoggedIn = true; resetIdleTimer();
+      try {
+        const safeEmail = user.email.toLowerCase();
+        const docSnap = await getDoc(doc(db, "users", safeEmail));
+        if (docSnap.exists()) {
+          const u = docSnap.data(); 
+          currentRole = u.role || "volunteer"; 
+          currentPerms = u.permissions || [];
+          
+          // Set profiles texts
+          document.getElementById("welcomeManager").innerText = `أهلاً ومرحباً بك قيادتنا الموقرة، الأستاذ/ة ${u.name}`;
+          document.querySelector(".username").innerText = u.name;
+          
+          // Generate Initials
+          const initials = u.name.split(' ').map(n => n[0]).join('').substring(0, 2);
+          document.getElementById("navAvatarInitials").innerText = initials;
+          
+          if (currentRole === "owner" || currentRole === "owner_deputy") {
+            document.getElementById("managerRole").innerText = currentRole === "owner" ? "الصلاحية الممنوحة: المالك العام للمنصة والأنظمة 👑" : "الصلاحية الممنوحة: نائب المدير العام والوزير الأول 👑";
+            
+            // Show all sections
+            const sections = ["analyticsSection", "usersManagementSection", "initiativesManagementSection", "operationsSection", "cmsSection"];
+            sections.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = "block"; });
+            
+            // Show triggers
+            document.getElementById("trigger-hr").style.display = "flex";
+            document.getElementById("trigger-init").style.display = "flex";
+            document.getElementById("trigger-ops").style.display = "flex";
+            document.getElementById("trigger-cms").style.display = "flex";
+            
+            const blocks = ["initiativesBlock", "approvalBlock", "attendanceBlock", "batchApproveBlock", "activeInitsBlock", "archiveInitsBlock", "announceBlock", "exportBlock", "deptAppsBlock", "submitReportBlock", "viewReportsBlock", "certificatesBlock", "supportTicketsBlock"];
+            blocks.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = "block"; });
+            
+            // Trigger loads
+            try { window.loadAdminData(); } catch (e) {}
+            try { window.loadCMSData(); } catch (e) {}
+            try { window.loadLeaderboard(); } catch (e) {}
+            try { window.loadActiveInitiativesAdmin(); } catch (e) {}
+            try { window.loadBansList(); } catch (e) {}
+            try { window.loadSupportTickets(); } catch (e) {}
+            try { window.loadReports(); } catch (e) {}
+            try { window.loadDeptApps(); } catch (e) {}
+            try { window.loadAlbumImages(); } catch (e) {}
+          } else if (currentRole !== "volunteer") {
+            document.getElementById("managerRole").innerText = currentRole === "general_admin" ? "الصلاحية الممنوحة: إداري عام شؤون الرقابة والمتابعة 🛡️" : "الصلاحية الممنوحة: إدارة وقيادة الأقسام التنفيذية واللجان الميدانية";
+            
+            // Show only relevant sections
+            const sections = ["initiativesManagementSection", "operationsSection"];
+            sections.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = "block"; });
+            
+            // Show triggers
+            document.getElementById("trigger-init").style.display = "flex";
+            document.getElementById("trigger-ops").style.display = "flex";
+            
+            // Hide others
+            document.getElementById("trigger-hr").style.display = "none";
+            document.getElementById("trigger-cms").style.display = "none";
+            
+            let blocksToShow = [];
+            if (currentPerms.includes("dept_apps")) { blocksToShow.push("deptAppsBlock"); document.getElementById("trigger-hr").style.display = "flex"; }
+            if (currentPerms.includes("attendance")) { blocksToShow.push("attendanceBlock"); blocksToShow.push("approvalBlock"); }
+            if (currentPerms.includes("report")) blocksToShow.push("submitReportBlock");
+            if (currentPerms.includes("announce")) blocksToShow.push("announceBlock");
+            if (currentPerms.includes("initiatives")) { blocksToShow.push("initiativesBlock"); blocksToShow.push("activeInitsBlock"); blocksToShow.push("archiveInitsBlock"); }
+            if (currentPerms.includes("export")) blocksToShow.push("exportBlock");
+            if (currentPerms.includes("support")) blocksToShow.push("supportTicketsBlock");
+            
+            blocksToShow.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = "block"; });
+            try { window.loadActiveInitiativesAdmin(); } catch (e) {}
+            if (currentPerms.includes("dept_apps")) { try { window.loadDeptApps(); } catch (e) {} }
+            if (currentPerms.includes("support")) { try { window.loadSupportTickets(); } catch (e) {} }
+          } else {
+            alert("دخول غير مصرح: لا تملك صلاحية الدخول لبوابة القيادة.");
+            window.location.href = "dashboard.html";
+          }
+          
+          window.initTabs();
+          const overlay = document.getElementById("authLoadingOverlay");
+          if (overlay) overlay.remove();
+        } else { alert("ملف الحساب غير موجود بقاعدة بيانات القيادة."); window.location.href = "gateway.html"; }
+      } catch (errorAuth) { console.error("Critical Auth Error:", errorAuth); alert("حدث خطأ فني أثناء فحص بيانات من السحابة."); }
+    });
+
+    // Leaders & Volunteers Loader
+    const roleOptionsHTMLString = `<option value="volunteer">متطوع عادي</option><optgroup label="الإدارة العليا الفدرالية المظلية"><option value="owner">المالك العام للمنصة (Owner) 👑</option><option value="owner_deputy">نائب المدير العام المعتمد 👑</option><option value="general_admin">إداري عام شؤون الرقابة والمتابعة 🛡️</option></optgroup><optgroup label="شؤون الخزينة والإدارة المالية المعتمدة"><option value="treasurer">أمين الصندوق العام للفريق 💰</option><option value="finance_admin">إداري مالي ومحاسب لوجستي 💰</option></optgroup><optgroup label="القسم القانوني والحوكمة الإدارية"><option value="legal_leader">قائد قانوني رئيسي بالمنصة</option><option value="legal_deputy">نائب قانوني لتدقيق السجلات</option><option value="legal_admin">إداري قانوني وموثق عقود ورخص</option></optgroup><optgroup label="القسم الإعلامي الأكاديمي والتوثيق"><option value="media_leader">قائد إعلامي ومنسق التغطيات</option><option value="media_deputy">نائب إعلامي لفرز المحتوى الشامل</option><option value="media_admin">إداري إعلامي ومحرر أخبار وتقارير</option></optgroup><optgroup label="القسم التنظيمي الميداني والعمليات"><option value="org_leader">قائد تنظيمي ورئيس شؤون الحشود</option><option value="org_deputy">نائب تنظيمي لإدارة الفرق الفرعية</option><option value="org_admin">إداري تنظيمي وموزع بطاقات الميدان</option></optgroup><optgroup label="القسم الصحي الموجه والدياجنوستكس"><option value="health_leader">قائد صحي وطبيب الفعاليات الرئيسي</option><option value="health_deputy">نائب صحي لشؤون الإسعاف الميداني</option><option value="health_admin">إداري صحي وموثق حقائب المستلزمات</option></optgroup><optgroup label="القسم العلمي والتثقيفي العام"><option value="sci_leader">قائد علمي ورئيس الأبحاث التوعوية</option><option value="sci_deputy">نائب علمي للتدقيق الطبي والبيولوجي</option><option value="sci_admin">إداري علمي ومراجع مخرجات الفعاليات</option></optgroup><optgroup label="القسم التسويقي وبناء الشراكات الرعوية"><option value="mark_leader">قائد تسويقي ومستقطب الرعايات والعقود</option><option value="mark_deputy">نائب تسويقي لدراسات السوق والفرص</option><option value="mark_admin">إداري تسويقي ومصمم ملفات الرعاة</option></optgroup><optgroup label="قسم التصميم الفني والمونتاج"><option value="design_leader">قائد تصميم ومشرف هوية برلين الفنية</option><option value="design_deputy">نائب تصميم ومحرر مقاطع التدشين</option><option value="design_admin">إداري تصميم ومصمم كروت المبادرات الرقمية</option></optgroup>`;
+
+    window.loadAdminData = async function() {
+      const lBody = document.getElementById("leadersTableBody");
+      const vBody = document.getElementById("volunteersTableBody");
+      try {
+        const qs = await getDocs(collection(db, "users"));
+        lBody.innerHTML = ""; vBody.innerHTML = "";
+        let totalHours = 0; let userCount = 0;
+        qs.forEach((d) => {
+          const u = d.data(); userCount++; totalHours += (Number(u.hours) || 0);
+          if (u.role === "owner" && d.id === auth.currentUser.email) return;
+          let userOpts = roleOptionsHTMLString.replace(`value="${u.role}"`, `value="${u.role}" selected`);
+          if (u.role && u.role !== 'volunteer') {
+            const p = u.permissions || []; const chk = (val) => p.includes(val) ? "checked" : "";
+            lBody.innerHTML += `<tr>
+              <td><strong>${u.name}</strong><br><small style="color:var(--text-muted);">${d.id}</small></td>
+              <td><select id="role-${d.id}" class="form-control form-control-sm">${userOpts}</select></td>
+              <td>
+                <div class="custom-checkbox-grid">
+                  <label class="custom-checkbox-card"><input type="checkbox" id="p-att-${d.id}" ${chk('attendance')}> <span>القبول والحضور</span></label>
+                  <label class="custom-checkbox-card"><input type="checkbox" id="p-sup-${d.id}" ${chk('support')}> <span>الدعم الفني</span></label>
+                  <label class="custom-checkbox-card"><input type="checkbox" id="p-rep-${d.id}" ${chk('report')}> <span>التقرير الميداني</span></label>
+                  <label class="custom-checkbox-card"><input type="checkbox" id="p-init-${d.id}" ${chk('initiatives')}> <span>إدارة المبادرات</span></label>
+                  <label class="custom-checkbox-card"><input type="checkbox" id="p-exp-${d.id}" ${chk('export')}> <span>تصدير البيانات</span></label>
+                  <label class="custom-checkbox-card"><input type="checkbox" id="p-ann-${d.id}" ${chk('announce')}> <span>بث البيانات</span></label>
+                  <label class="custom-checkbox-card"><input type="checkbox" id="p-dept-${d.id}" ${chk('dept_apps')}> <span>طلبات اللجان</span></label>
+                  <label class="custom-checkbox-card checked-fin"><input type="checkbox" id="p-fin-${d.id}" ${chk('finance')}> <span style="color:var(--success);">الخزينة والمالية</span></label>
+                </div>
+              </td>
+              <td><button class="btn-hms btn-primary btn-sm" onclick="window.updateLeader('${d.id}')"><i class="fa-solid fa-floppy-disk"></i> حفظ</button></td>
+            </tr>`;
+          } else {
+            vBody.innerHTML += `<tr>
+              <td><strong>${u.name}</strong><br><small style="color:var(--text-muted);">${d.id}</small></td>
+              <td><span class="badge badge-success font-en">${u.hours || 0} Hrs</span></td>
+              <td><select id="vrole-${d.id}" class="form-control form-control-sm">${userOpts}</select></td>
+              <td>
+                <div style="display:flex; gap:6px;">
+                  <input type="number" id="vhrs-${d.id}" class="form-control form-control-sm" placeholder="تعديل الساعات يدوياً" style="max-width:110px;">
+                  <button class="btn-hms btn-secondary btn-sm" onclick="window.updateVolunteer('${d.id}')" title="تحديث الساعات والرتبة"><i class="fa-solid fa-sync"></i></button>
+                  <button class="btn-hms btn-danger btn-sm btn-icon-only" onclick="window.deleteUserAccount('${d.id}')" title="حذف الحساب نهائياً"><i class="fa-solid fa-trash"></i></button>
+                </div>
+              </td>
+            </tr>`;
+          }
+        });
+        document.getElementById("totalUsersStat").innerText = userCount + " حساب";
+        document.getElementById("totalHoursStat").innerText = totalHours + " ساعة";
+      } catch (e) { console.error(e); }
+    };
+
+    window.updateLeader = async function(email) {
+      const role = document.getElementById(`role-${email}`).value;
+      let perms = [];
+      if (document.getElementById(`p-att-${email}`).checked) perms.push("attendance");
+      if (document.getElementById(`p-sup-${email}`).checked) perms.push("support");
+      if (document.getElementById(`p-rep-${email}`).checked) perms.push("report");
+      if (document.getElementById(`p-init-${email}`).checked) perms.push("initiatives");
+      if (document.getElementById(`p-exp-${email}`).checked) perms.push("export");
+      if (document.getElementById(`p-ann-${email}`).checked) perms.push("announce");
+      if (document.getElementById(`p-dept-${email}`).checked) perms.push("dept_apps");
+      if (document.getElementById(`p-fin-${email}`).checked) perms.push("finance");
+      try {
+        await updateDoc(doc(db, "users", email), { role: role, permissions: perms });
+        alert("قرار قيادي ناجح: تم ترقية رتبة وتحديث كافة صلاحيات اللوحة لهذا الكادر المعتمد.");
+        window.loadAdminData();
+      } catch (e) { console.error(e); alert("حدث خطأ أثناء ترقية القيادي."); }
+    };
+
+    window.updateVolunteer = async function(email) {
+      const role = document.getElementById(`vrole-${email}`).value;
+      const hrInput = document.getElementById(`vhrs-${email}`).value;
+      let updates = { role: role };
+      if (hrInput !== "") updates.hours = Number(hrInput);
+      try {
+        await updateDoc(doc(db, "users", email), updates);
+        alert("تم تحديث الرتبة وإيداع ساعات المتطوع يدوياً بنجاح.");
+        window.loadAdminData();
+      } catch (e) { console.error(e); alert("حدث خطأ في عملية التحكم اليدوي للساعات."); }
+    };
+
+    window.addHoursQuick = async function() {
+      const identifier = document.getElementById("quickHourId").value.trim().toLowerCase();
+      const hoursToAdd = Number(document.getElementById("quickHourValue").value);
+      if (!identifier || !hoursToAdd) { alert("يرجى إدخال (رقم الهوية أو البريد الإلكتروني) و (عدد الساعات المراد إضافتها)."); return; }
+      try {
+        let userRef = null; let userSnap = null;
+        if (identifier.includes("@")) { userRef = doc(db, "users", identifier); userSnap = await getDoc(userRef); }
+        else { const q = query(collection(db, "users"), where("nationalId", "==", identifier)); const qs = await getDocs(q); if (!qs.empty) { userSnap = qs.docs[0]; userRef = doc(db, "users", userSnap.id); } }
+        if (userSnap && userSnap.exists()) {
+          const currentHours = Number(userSnap.data().hours) || 0;
+          const newTotal = currentHours + hoursToAdd;
+          await updateDoc(userRef, { hours: newTotal, hoursLog: arrayUnion({ initiative: "إضافة إدارية مباشرة", hours: hoursToAdd, date: new Date().toLocaleDateString('ar-SA') }) });
+          alert(`عملية ناجحة: تم إضافة (${hoursToAdd}) ساعة لـ (${userSnap.data().name}).\nالرصيد الجديد: ${newTotal} ساعة.`);
+          document.getElementById("quickHourId").value = ""; document.getElementById("quickHourValue").value = "";
+          window.loadAdminData();
+        } else { alert("لم يتم العثور على أي متطوع يطابق المعرف المدخل."); }
+      } catch (e) { console.error(e); alert("حدث خطأ أثناء محاولة إضافة الساعات السريعة."); }
+    };
+
+    window.deleteUserAccount = async function(email) {
+      if (confirm("تحذير حاسم: سيتم مسح ملف الحساب بالكامل من السجلات نهائياً. هل توافق؟")) {
+        try { await deleteDoc(doc(db, "users", email)); alert("تم مسح حساب المتطوع بنجاح."); window.loadAdminData(); }
+        catch (e) { console.error(e); alert("حدث خطأ أثناء الحذف."); }
+      }
+    };
+
+    window.filterVolunteersTable = function() {
+      const searchVal = document.getElementById("volunteerSearchInput").value.toLowerCase().trim();
+      const tbody = document.getElementById("volunteersTableBody");
+      const rows = tbody.getElementsByTagName("tr");
+      for (let i = 0; i < rows.length; i++) {
+        const nameCell = rows[i].getElementsByTagName("td")[0];
+        if (nameCell) { rows[i].style.display = nameCell.textContent.toLowerCase().indexOf(searchVal) > -1 ? "" : "none"; }
+      }
+    };
+
+    // Initiatives Management Functions
+    window.addInitiative = async function() {
+      const n = document.getElementById("initName").value.trim();
+      const h = document.getElementById("initHours").value;
+      const d = document.getElementById("initDate").value;
+      const c = document.getElementById("initCapacity").value;
+      const rolesStr = document.getElementById("initRoles").value.trim();
+      if (!n || !h || !d) { alert("تنبيه أمان: يرجى تعبئة (اسم الفرصة، الساعات، والتاريخ) كحد أدنى."); return; }
+      const rolesArr = rolesStr ? rolesStr.split('،').map(r => r.trim()).filter(r => r !== "") : ["مشارك عام"];
+      try {
+        await addDoc(collection(db, "initiatives"), { name: n, hours: Number(h), date: d, capacity: c ? Number(c) : "", roles: rolesArr, status: 'active', isFull: false, registeredCount: 0 });
+        alert("نشر ناجح: تم ضخ المبادرة التطوعية بالمهام المخصصة بداخل النظام!");
+        window.loadActiveInitiativesAdmin();
+        document.getElementById("initName").value = ""; document.getElementById("initHours").value = ""; document.getElementById("initDate").value = ""; document.getElementById("initCapacity").value = ""; document.getElementById("initRoles").value = "";
+      } catch (e) { console.error("Error adding initiative:", e); alert("حدث خطأ غير متوقع بالاتصال، أعد النشر."); }
+    };
+
+    window.loadActiveInitiativesAdmin = async function() {
+      const activeBody = document.getElementById("activeInitsBody");
+      const archiveBody = document.getElementById("archiveInitsBody");
+      const approvalSelect = document.getElementById("approvalInitSelect");
+      const attSelect = document.getElementById("attendanceInitSelect");
+      const batchSelect = document.getElementById("batchApproveSelect");
+      const exportSelect = document.getElementById("exportInitNameSelect");
+      try {
+        const qs = await getDocs(collection(db, "initiatives"));
+        let activeHtml = ""; let archiveHtml = "";
+        let optionsHTML = '<option value="">اختر المبادرة...</option>';
+        qs.forEach(docSnap => {
+          const data = docSnap.data();
+          if (data.status === 'completed') {
+            archiveHtml += `<tr>
+              <td><strong>${data.name}</strong><br><small style="color:var(--primary); font-weight:700;">${data.hours} ساعات</small></td>
+              <td><span class="font-en">${data.date}</span></td>
+              <td>${data.finalRegistered || 0} متطوع</td>
+              <td><div style="display:flex; justify-content:space-between; align-items:center;"><span style="color:var(--success); font-weight:bold;">${data.finalAttended || 0} حاضر</span><button class="btn-hms btn-danger btn-sm btn-icon-only" onclick="window.deleteInitiative('${docSnap.id}')"><i class="fa-solid fa-trash"></i></button></div></td>
+            </tr>`;
+          } else {
+            const isFull = data.isFull === true;
+            optionsHTML += `<option value="${data.name}" data-hours="${data.hours}">${data.name} (${data.hours} ساعات معتمدة)</option>`;
+            activeHtml += `<tr>
+              <td><input type="text" id="edit-name-${docSnap.id}" class="form-control form-control-sm" value="${data.name}"></td>
+              <td><input type="number" id="edit-hrs-${docSnap.id}" class="form-control form-control-sm" value="${data.hours}" style="max-width:70px;"></td>
+              <td><input type="number" id="edit-cap-${docSnap.id}" class="form-control form-control-sm" value="${data.capacity || ''}" style="max-width:70px;"></td>
+              <td><input type="date" id="edit-date-${docSnap.id}" class="form-control form-control-sm font-en" value="${data.date || ''}" style="max-width:140px;"></td>
+              <td>
+                <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                  <button class="btn-hms btn-primary btn-sm btn-icon-only" onclick="window.editInitiative('${docSnap.id}')" title="حفظ"><i class="fa-solid fa-floppy-disk"></i></button>
+                  <button class="btn-hms ${isFull ? 'btn-secondary' : 'btn-warning'} btn-sm" onclick="window.toggleInitiativeFull('${docSnap.id}', ${isFull})">${isFull ? 'فتح التسجيل' : 'إعلان الاكتفاء'}</button>
+                  <button class="btn-hms btn-success btn-sm" onclick="window.markInitiativeCompleted('${docSnap.id}', '${data.name}')">إنجاز</button>
+                  <button class="btn-hms btn-danger btn-sm btn-icon-only" onclick="window.deleteInitiative('${docSnap.id}')"><i class="fa-solid fa-trash"></i></button>
+                </div>
+              </td>
+            </tr>`;
+          }
+        });
+        if (activeBody) activeBody.innerHTML = activeHtml || "<tr><td colspan='5' style='color:var(--text-muted); text-align:center; padding:20px;'>لا توجد مبادرات نشطة حالياً.</td></tr>";
+        if (archiveBody) archiveBody.innerHTML = archiveHtml || "<tr><td colspan='4' style='color:var(--text-muted); text-align:center; padding:20px;'>لا توجد مبادرات منجزة في الأرشيف بعد.</td></tr>";
+        if (approvalSelect) approvalSelect.innerHTML = optionsHTML;
+        if (attSelect) attSelect.innerHTML = optionsHTML;
+        if (batchSelect) batchSelect.innerHTML = optionsHTML;
+        if (exportSelect) exportSelect.innerHTML = optionsHTML;
+        if (document.getElementById("totalInitsStat")) document.getElementById("totalInitsStat").innerText = qs.size;
+      } catch (e) { console.error(e); }
+    };
+
+    window.editInitiative = async function(id) {
+      const newName = document.getElementById(`edit-name-${id}`).value; 
+      const newHrs = document.getElementById(`edit-hrs-${id}`).value; 
+      const newCap = document.getElementById(`edit-cap-${id}`).value; 
+      const newDate = document.getElementById(`edit-date-${id}`).value;
+      try { 
+        await updateDoc(doc(db, "initiatives", id), { name: newName, hours: Number(newHrs), capacity: Number(newCap), date: newDate }); 
+        alert("تم تعديل وحفظ تفاصيل الفرصة بداخل النظام!"); 
+        window.loadActiveInitiativesAdmin(); 
+      }
+      catch (e) { console.error(e); }
+    };
+
+    window.deleteInitiative = async function(id) {
+      if (confirm("تحذير: هل أنت متأكد تماماً من إلغاء هذه الفرصة نهائياً؟")) {
+        try { await deleteDoc(doc(db, "initiatives", id)); window.loadActiveInitiativesAdmin(); }
+        catch (e) { console.error(e); }
+      }
+    };
+
+    window.toggleInitiativeFull = async function(id, isCurrentlyFull) {
+      try { await updateDoc(doc(db, "initiatives", id), { isFull: !isCurrentlyFull }); isCurrentlyFull ? alert("تم إزالة الاكتفاء وفتح التسجيل 🔓.") : alert("تم إعلان الاكتفاء! لن يتمكن المتطوعون من التسجيل 🔒."); window.loadActiveInitiativesAdmin(); }
+      catch (e) { console.error(e); }
+    };
+
+    window.markInitiativeCompleted = async function(id, initName) {
+      if (!confirm("هل أنت متأكد من إنهاء وإنجاز هذه المبادرة؟ سيتم نقلها للأرشيف الدائم.")) return;
+      try {
+        const qs = await getDocs(query(collection(db, "registrations"), where("initiativeName", "==", initName)));
+        let regCount = qs.size; let attCount = 0;
+        qs.forEach(docSnap => { if (docSnap.data().attendance === 'present') attCount++; });
+        await updateDoc(doc(db, "initiatives", id), { status: 'completed', finalRegistered: regCount, finalAttended: attCount });
+        alert("عملية عظيمة! تم توثيق إنجاز المبادرة ونقلها للأرشيف مع إحصائياتها.");
+        window.loadActiveInitiativesAdmin();
+      } catch (e) { console.error(e); alert("حدث خطأ أثناء نقل المبادرة للأرشيف."); }
+    };
+
+    // Pending registrations list
+    window.loadPendingRegistrations = async function() {
+      const initName = document.getElementById("approvalInitSelect").value;
+      const tbody = document.getElementById("approvalListBody");
+      if (!initName) { tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:20px;">يرجى تحديد الفرصة أولاً...</td></tr>`; return; }
+      tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:20px;">جاري جلب كشوفات الطلبات...</td></tr>`;
+      try {
+        const qs = await getDocs(query(collection(db, "registrations"), where("initiativeName", "==", initName)));
+        tbody.innerHTML = ""; let hasPending = false;
+        qs.forEach(docSnap => {
+          const d = docSnap.data();
+          if (d.approvalStatus === 'pending' || !d.approvalStatus) {
+            hasPending = true;
+            tbody.innerHTML += `<tr>
+              <td><strong>${d.fullName}</strong></td>
+              <td style="color:var(--primary); font-weight:bold;">${d.appliedRoles ? d.appliedRoles.join("، ") : "مشارك ميداني عام"}</td>
+              <td>
+                <button class="btn-hms btn-success btn-sm" onclick="window.approveVolunteer('${docSnap.id}')"><i class="fa-solid fa-circle-check"></i> قبول</button> 
+                <button class="btn-hms btn-danger btn-sm" onclick="window.rejectVolunteer('${docSnap.id}')"><i class="fa-solid fa-circle-xmark"></i> رفض</button>
+              </td>
+            </tr>`;
+          }
+        });
+        if (!hasPending) tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:20px;">لا توجد طلبات معلقة لهذه المبادرة حالياً.</td></tr>`;
+      } catch (e) { console.error(e); }
+    };
+
+    window.approveVolunteer = async function(regId) {
+      try { await updateDoc(doc(db, "registrations", regId), { approvalStatus: "approved" }); window.loadPendingRegistrations(); if (document.getElementById("attendanceInitSelect").value) window.loadAttendanceList(); }
+      catch (e) { console.error(e); }
+    };
+
+    window.rejectVolunteer = async function(regId) {
+      if (confirm("هل أنت متأكد من رفض طلب هذا المتطوع واستبعاده من هذه المبادرة؟")) {
+        try { await updateDoc(doc(db, "registrations", regId), { approvalStatus: "rejected" }); window.loadPendingRegistrations(); }
+        catch (e) { console.error(e); }
+      }
+    };
+
+    // Attendance registry Tracker
+    window.loadAttendanceList = async function() {
+      const initName = document.getElementById("attendanceInitSelect").value;
+      const tbody = document.getElementById("attendanceListBody");
+      if (!initName) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">يرجى تحديد الفرصة لبدء التحضير...</td></tr>`; return; }
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">جاري سحب الجداول (للمقبولين فقط)...</td></tr>`;
+      try {
+        const qs = await getDocs(query(collection(db, "registrations"), where("initiativeName", "==", initName)));
+        tbody.innerHTML = ""; let hasApproved = false;
+        qs.forEach(docSnap => {
+          const d = docSnap.data();
+          if (d.approvalStatus === 'approved') {
+            hasApproved = true;
+            const status = d.attendance || 'pending';
+            let statusText = status === 'present' ? '<span style="color:var(--success);font-weight:bold;"><i class="fa-solid fa-circle-check"></i> حاضر</span>' : (status === 'absent' ? '<span style="color:var(--danger);font-weight:bold;"><i class="fa-solid fa-circle-xmark"></i> غائب</span>' : (status === 'withdrawn' ? '<span style="color:var(--danger);font-weight:bold;"><i class="fa-solid fa-right-from-bracket"></i> منسحب بعذر</span>' : '<span style="color:var(--warning);font-weight:bold;"><i class="fa-solid fa-clock"></i> قيد الانتظار</span>'));
+            tbody.innerHTML += `<tr>
+              <td><strong>${d.fullName}</strong><br><small style="color:var(--text-muted);">${d.nationalId}</small></td>
+              <td style="color:var(--primary); font-size:0.85rem;">${d.appliedRoles ? d.appliedRoles.join("، ") : "مشارك عام"}</td>
+              <td id="status-${docSnap.id}">${statusText}</td>
+              <td>
+                <button class="btn-hms btn-success btn-sm" onclick="window.markAtt('${docSnap.id}', 'present')"><i class="fa-solid fa-circle-check"></i> تحضير</button> 
+                <button class="btn-hms btn-danger btn-sm" onclick="window.markAtt('${docSnap.id}', 'absent')"><i class="fa-solid fa-circle-xmark"></i> غياب</button>
+              </td>
+            </tr>`;
+          }
+        });
+        if (!hasApproved) tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">الكشوفات فارغة. تأكد من قبول طلبات التسجيل أولاً.</td></tr>`;
+      } catch (e) { console.error(e); }
+    };
+
+    window.markAtt = async function(regId, status) {
+      try { await updateDoc(doc(db, "registrations", regId), { attendance: status }); document.getElementById(`status-${regId}`).innerHTML = status === 'present' ? '<span style="color:var(--success);font-weight:bold;"><i class="fa-solid fa-circle-check"></i> حاضر</span>' : '<span style="color:var(--danger);font-weight:bold;"><i class="fa-solid fa-circle-xmark"></i> غائب</span>'; }
+      catch (e) { console.error(e); }
+    };
+
+    // Operations and Exports functions
+    window.batchApproveHours = async function() {
+      const select = document.getElementById("batchApproveSelect");
+      const initName = select.value;
+      const initHours = Number(select.options[select.selectedIndex].getAttribute('data-hours'));
+      if (!initName) { alert("الرجاء اختيار المبادرة المستهدفة أولاً."); return; }
+      if (!confirm(`هل توافق على ضخ (${initHours}) ساعات لجميع الأعضاء المسجلين بحالة (حاضر)؟`)) return;
+      try {
+        const qs = await getDocs(query(collection(db, "registrations"), where("initiativeName", "==", initName), where("attendance", "==", "present")));
+        if (qs.empty) { alert("لا يوجد أي متطوع مسجلة حالته كـ (حاضر) في هذه الفرصة."); return; }
+        const batch = writeBatch(db); let count = 0;
+        for (const docSnap of qs.docs) {
+          const email = docSnap.data().email;
+          if (email) { const userRef = doc(db, "users", email); const userSnap = await getDoc(userRef); if (userSnap.exists()) { batch.update(userRef, { hours: (Number(userSnap.data().hours) || 0) + initHours, hoursLog: arrayUnion({ initiative: initName, hours: initHours, date: new Date().toLocaleDateString('ar-SA') }) }); count++; } }
+        }
+        await batch.commit();
+        alert(`إنجاز مشرف: تم ضخ وإيداع الساعات الجماعية لـ (${count}) حاضرين بملفات حساباتهم بنجاح.`);
+        window.loadAdminData();
+      } catch (e) { console.error(e); alert("حدث خطأ تقني أثناء عملية الضخ السحابي الكلي للساعات."); }
+    };
+
+    window.exportRegistrationsToCSV = async function() {
+      const initName = document.getElementById("exportInitNameSelect").value;
+      if (!initName) { alert("يرجى تحديد الفرصة المراد تحميل كشوفاتها أولاً."); return; }
+      try {
+        const qs = await getDocs(query(collection(db, "registrations"), where("initiativeName", "==", initName)));
+        if (qs.empty) { alert("لا توجد أي كشوفات لهذه الفعالية."); return; }
+        let htmlTable = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"></head><body dir="rtl"><table border="1">`;
+        htmlTable += `<tr><th style="background:#0F766E;color:white;">الاسم</th><th style="background:#0F766E;color:white;">رقم الهوية</th><th style="background:#0F766E;color:white;">رقم الجوال</th><th style="background:#0F766E;color:white;">التخصص</th><th style="background:#0F766E;color:white;">المكان</th><th style="background:#0F766E;color:white;">وقت الحجز</th><th style="background:#0F766E;color:white;">المهام</th><th style="background:#0F766E;color:white;">القبول</th><th style="background:#0F766E;color:white;">الحضور</th><th style="background:#0F766E;color:white;">عذر الانسحاب</th></tr>`;
+        qs.forEach((docSnap) => {
+          const d = docSnap.data();
+          let att = 'بالانتظار'; if (d.attendance === 'present') att = 'حاضر'; else if (d.attendance === 'absent') att = 'غائب'; else if (d.attendance === 'withdrawn') att = 'منسحب';
+          let app = 'قيد المراجعة'; if (d.approvalStatus === 'approved') app = 'مقبول'; else if (d.approvalStatus === 'rejected') app = 'مرفوض';
+          htmlTable += `<tr><td>${d.fullName}</td><td style="mso-number-format:'\\@';">${d.nationalId}</td><td style="mso-number-format:'\\@';">${d.phone}</td><td>${d.major}</td><td>${d.location}</td><td>${d.timestamp}</td><td>${d.appliedRoles ? d.appliedRoles.join(" - ") : "مشارك عام"}</td><td>${app}</td><td>${att}</td><td>${d.excuse ? d.excuse : "لا يوجد"}</td></tr>`;
+        });
+        htmlTable += `</table></body></html>`;
+        const blob = new Blob([htmlTable], { type: 'application/vnd.ms-excel' });
+        const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `كشف_مبادرة_${initName.replace(/\s+/g, '_')}.xls`; link.click();
+      } catch (e) { console.error(e); alert("حدث خطأ في توليد ملف الإكسل."); }
+    };
+
+    window.exportRegistrationsToPDF = async function() {
+      const initName = document.getElementById("exportInitNameSelect").value;
+      if (!initName) { alert("يرجى تحديد الفرصة أولاً."); return; }
+      try {
+        const qs = await getDocs(query(collection(db, "registrations"), where("initiativeName", "==", initName)));
+        if (qs.empty) { alert("لا توجد أي كشوفات لهذه الفعالية."); return; }
+        let printWindow = window.open('', '_blank');
+        let htmlContent = `<html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>كشف مبادرة - ${initName}</title><style>body{font-family:Cairo,sans-serif;padding:20px;direction:rtl;}h2{text-align:center;color:#333;margin-bottom:30px;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{border:1px solid #ccc;padding:12px;text-align:center;font-size:14px;}th{background:#f8fafc;color:#0f172a;font-weight:bold;}@media print{@page{size:landscape;}body{-webkit-print-color-adjust:exact;}}</style></head><body><h2>كشف أسماء المتطوعين لمبادرة: ${initName}</h2><table><thead><tr><th>الاسم الرباعي</th><th>رقم الهوية</th><th>الجوال</th><th>التخصص</th><th>المهام المطلوبة</th><th>القبول الإداري</th><th>الحضور الميداني</th></tr></thead><tbody>`;
+        qs.forEach((docSnap) => {
+          const d = docSnap.data();
+          let att = 'انتظار'; if (d.attendance === 'present') att = 'حاضر'; else if (d.attendance === 'absent') att = 'غائب'; else if (d.attendance === 'withdrawn') att = 'منسحب';
+          let app = 'قيد المراجعة'; if (d.approvalStatus === 'approved') app = 'مقبول'; else if (d.approvalStatus === 'rejected') app = 'مرفوض';
+          htmlContent += `<tr><td><strong>${d.fullName}</strong></td><td>${d.nationalId}</td><td>${d.phone}</td><td>${d.major}</td><td>${d.appliedRoles ? d.appliedRoles.join(" - ") : "مشارك عام"}</td><td>${app}</td><td>${att}</td></tr>`;
+        });
+        htmlContent += `</tbody></table><scr` + `ipt>window.onload=function(){setTimeout(()=>{window.print();window.close();},500);}</scr` + `ipt></body></html>`;
+        printWindow.document.open(); printWindow.document.write(htmlContent); printWindow.document.close();
+      } catch (e) { console.error(e); alert("حدث خطأ أثناء إنشاء ملف PDF."); }
+    };
+
+    window.sendAnnounce = async function() {
+      const text = document.getElementById("announceText").value;
+      if (!text) { alert("الرسالة فارغة، يرجى كتابة التعميم!"); return; }
+      try { await setDoc(doc(db, "settings", "announcement"), { content: text, date: new Date().toLocaleDateString('ar-SA') }); alert("تم بث التعميم العاجل لكافة لوحات المتطوعين بنجاح!"); }
+      catch (e) { console.error(e); alert("حدث خطأ في عملية البث."); }
+    };
+
+    window.clearAnnouncement = async function() {
+      try { await setDoc(doc(db, "settings", "announcement"), { content: "" }, { merge: true }); alert("تم مسح وإلغاء البيان والتعميم الإداري بنجاح."); document.getElementById("announceText").value = ""; }
+      catch (e) { console.error(e); alert("خطأ في المسح السحابي الفوري."); }
+    };
+
+    // Reports submittings functions
+    window.submitDepartmentReport = async function() {
+      const text = document.getElementById("deptReportInput").value.trim();
+      if (!text) { alert("الرجاء كتابة نص التقرير الميداني أولاً."); return; }
+      try {
+        await addDoc(collection(db, "reports"), { senderName: document.getElementById("welcomeManager").innerText.replace('أهلاً ومرحباً بك قيادتنا الموقرة، الأستاذ/ة ', ''), senderEmail: auth.currentUser.email, content: text, date: new Date().toLocaleDateString('ar-SA') });
+        alert("عملية ناجحة: تم رفع التقرير الميداني لقسمكم ووضعه بملفات الإدارة العليا بنجاح!");
+        document.getElementById("deptReportInput").value = "";
+      } catch (e) { console.error(e); alert("حدث خطأ أثناء رفع التقرير للسحابة."); }
+    };
+
+    window.loadReports = async function() {
+      const tbody = document.getElementById("reportsTableBody");
+      if (!tbody) return;
+      tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:20px; color:var(--text-muted);'>جاري جلب تقارير الأقسام...</td></tr>";
+      try {
+        const qs = await getDocs(collection(db, "reports"));
+        tbody.innerHTML = "";
+        if (qs.empty) { tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:20px; color:var(--text-muted);'>لا توجد أي تقارير ميدانية مرفوعة حالياً.</td></tr>"; return; }
+        qs.forEach(docSnap => {
+          const d = docSnap.data();
+          tbody.innerHTML += `<tr>
+            <td><strong>${d.senderName}</strong><br><small style="color:var(--text-muted);">${d.senderEmail}</small></td>
+            <td style="white-space:pre-wrap; text-align:justify; padding:12px; line-height:1.7;">${d.content}</td>
+            <td><span class="font-en">${d.date}</span></td>
+            <td><button class="btn-hms btn-danger btn-sm" onclick="window.deleteReport('${docSnap.id}')"><i class="fa-solid fa-trash"></i> حذف</button></td>
+          </tr>`;
+        });
+      } catch (e) { console.error(e); }
+    };
+
+    window.deleteReport = async function(id) {
+      if (confirm("هل أنت متأكد تماماً من حذف هذا التقرير الإداري نهائياً؟")) {
+        try { await deleteDoc(doc(db, "reports", id)); window.loadReports(); }
+        catch (e) { console.error(e); alert("فشلت عملية مسح المستند."); }
+      }
+    };
+
+    window.downloadAllReports = async function() {
+      try {
+        const qs = await getDocs(collection(db, "reports"));
+        if (qs.empty) { alert("لا توجد أي تقارير لتحميلها."); return; }
+        let fileContent = "سجل وبيانات تقارير الأقسام واللجان التنفيذية لفريق برلين التطوعي\n========================================================================\n\n";
+        qs.forEach(docSnap => { const d = docSnap.data(); fileContent += `تاريخ رفع التقرير: ${d.date}\nاسم المسؤول: ${d.senderName} (${d.senderEmail})\nنص التقرير:\n${d.content}\n\n------------------------------------------------------------------------\n\n`; });
+        const blob = new Blob([fileContent], { type: "text/plain;charset=utf-8" });
+        const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `سجل_تقارير_اللجان_${new Date().toLocaleDateString('ar-SA').replace(/\//g, '-')}.txt`; link.click();
+      } catch (e) { console.error(e); alert("حدث خطأ أثناء تجميع التقارير."); }
+    };
+
+    // Blacklist Functions
+    window.banVolunteer = async function() {
+      const nid = document.getElementById("banIdInput").value.trim();
+      const reason = document.getElementById("banReasonInput").value.trim() || "مخالفة السياسات الداخلية المعتمدة للفريق";
+      if (!nid) { alert("يرجى كتابة رقم هوية المتطوع أولاً."); return; }
+      try {
+        await setDoc(doc(db, "banned_ids", nid), { reason: reason, date: new Date().toLocaleDateString() });
+        alert("تم إدراج الهوية في قائمة الإيقاف والحظر نهائياً.");
+        document.getElementById("banIdInput").value = ""; document.getElementById("banReasonInput").value = "";
+        window.loadBansList();
+      } catch (e) { console.error(e); alert("حدث خطأ أثناء تنفيذ الحظر."); }
+    };
+
+    window.unban = async function(nid) {
+      try { await deleteDoc(doc(db, "banned_ids", nid)); alert("تم إزالة الحظر عن الهوية الوطنية المحددة."); window.loadBansList(); }
+      catch (e) { console.error(e); }
+    };
+
+    window.loadBansList = async function() {
+      const tbody = document.getElementById("bannedTableBody");
+      if (!tbody) return;
+      try {
+        const qs = await getDocs(collection(db, "banned_ids"));
+        tbody.innerHTML = "";
+        if (qs.empty) { tbody.innerHTML = "<tr><td colspan='2' style='color:var(--text-muted); text-align:center; padding:15px;'>القائمة السوداء نظيفة ولا توجد هويات محظورة.</td></tr>"; return; }
+        qs.forEach(docSnap => {
+          const d = docSnap.data();
+          tbody.innerHTML += `<tr>
+            <td style="text-align:right;">
+              <i class="fa-solid fa-id-card" style="margin-left:6px; color:var(--danger);"></i> <strong>${docSnap.id}</strong><br>
+              <small style="color:var(--danger);">السبب: ${d.reason}</small>
+            </td>
+            <td><button class="btn-hms btn-success btn-sm" onclick="window.unban('${docSnap.id}')"><i class="fa-solid fa-lock-open"></i> فك الحظر</button></td>
+          </tr>`;
+        });
+      } catch (e) { console.error(e); }
+    };
+
+    // Department Applications Loader
+    window.loadDeptApps = async function() {
+      const tbody = document.getElementById("deptAppsTableBody");
+      if (!tbody) return;
+      let myDept = 'none';
+      if (currentRole === 'owner' || currentRole === 'owner_deputy' || currentRole === 'general_admin') myDept = 'all';
+      else if (currentRole.startsWith('media_')) myDept = 'media';
+      else if (currentRole.startsWith('org_')) myDept = 'org';
+      else if (currentRole.startsWith('health_')) myDept = 'health';
+      else if (currentRole.startsWith('sci_')) myDept = 'sci';
+      else if (currentRole.startsWith('mark_')) myDept = 'mark';
+      else if (currentRole.startsWith('design_')) myDept = 'design';
+      else if (currentRole.startsWith('legal_')) myDept = 'legal';
+      if (myDept === 'none') { tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:15px;'>عفواً، لا تملك الصلاحية اللازمة لعرض طلبات اللجان.</td></tr>"; return; }
+      tbody.innerHTML = "<tr><td colspan='5' style='color:var(--text-muted); text-align:center; padding:20px;'>جاري سحب وفحص طلبات الانضمام المعلقة...</td></tr>";
+      try {
+        const q = query(collection(db, "department_applications"), where("status", "==", "pending"));
+        const qs = await getDocs(q);
+        tbody.innerHTML = ""; let hasData = false;
+        const deptNames = { media: 'القسم الإعلامي', org: 'القسم التنظيمي', health: 'القسم الصحي', sci: 'القسم العلمي', mark: 'القسم التسويقي', design: 'قسم التصميم', legal: 'القسم القانوني' };
+        qs.forEach(docSnap => {
+          const d = docSnap.data();
+          if (myDept === 'all' || d.department === myDept) {
+            hasData = true;
+            tbody.innerHTML += `<tr>
+              <td><strong>${d.name}</strong><br><small style="color:var(--text-muted); font-family:var(--font-display);">${d.phone}</small></td>
+              <td><span class="badge badge-primary">${deptNames[d.department] || d.department}</span></td>
+              <td><span style="color:var(--success); font-weight:bold;">${d.skill || 'غير محدد'}</span></td>
+              <td style="white-space:pre-wrap; text-align:right; font-size:0.8rem; max-width:200px;">${d.experience || 'لا يوجد خبرات'}</td>
+              <td>
+                <button class="btn-hms btn-success btn-sm" onclick="window.approveDeptApp('${docSnap.id}')"><i class="fa-solid fa-circle-check"></i> قبول</button> 
+                <button class="btn-hms btn-danger btn-sm" onclick="window.rejectDeptApp('${docSnap.id}')"><i class="fa-solid fa-circle-xmark"></i> رفض</button>
+              </td>
+            </tr>`;
+          }
+        });
+        if (!hasData) tbody.innerHTML = "<tr><td colspan='5' style='color:var(--text-muted); text-align:center; padding:20px;'>لا توجد أي طلبات معلقة لقسمك حالياً.</td></tr>";
+      } catch (e) { console.error(e); }
+    };
+
+    window.approveDeptApp = async function(id) {
+      try { await updateDoc(doc(db, "department_applications", id), { status: "approved" }); window.loadDeptApps(); }
+      catch (e) { console.error(e); alert("حدث خطأ أثناء اعتماد قبول الإداري."); }
+    };
+
+    window.rejectDeptApp = async function(id) {
+      if (confirm("هل أنت متأكد من رفض طلب انضمام هذا الإداري؟")) {
+        try { await updateDoc(doc(db, "department_applications", id), { status: "rejected" }); window.loadDeptApps(); }
+        catch (e) { console.error(e); alert("حدث خطأ أثناء تنفيذ أمر الرفض."); }
+      }
+    };
+
+    window.exportDeptMembersToCSV = async function() {
+      const dept = document.getElementById("exportDeptSelect").value;
+      if (!dept) { alert("الرجاء تحديد اللجنة أو القسم المطلوب أولاً."); return; }
+      try {
+        let q; if (dept === 'all') q = query(collection(db, "department_applications"), where("status", "==", "approved")); else q = query(collection(db, "department_applications"), where("department", "==", dept), where("status", "==", "approved"));
+        const qs = await getDocs(q);
+        if (qs.empty) { alert("لا يوجد أي كادر مقبول ومعتمد في هذا القسم بقاعدة البيانات."); return; }
+        let htmlTable = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"></head><body dir="rtl"><table border="1">`;
+        htmlTable += `<tr><th style="background:#0F766E;color:white;">الاسم الكامل</th><th style="background:#0F766E;color:white;">البريد الإلكتروني</th><th style="background:#0F766E;color:white;">رقم الجوال</th><th style="background:#0F766E;color:white;">رقم الهوية</th><th style="background:#0F766E;color:white;">التخصص</th><th style="background:#0F766E;color:white;">المحافظة</th><th style="background:#0F766E;color:white;">العمر</th><th style="background:#0F766E;color:white;">القسم</th><th style="background:#0F766E;color:white;">المهارات</th><th style="background:#0F766E;color:white;">نوع الانضمام</th></tr>`;
+        const deptNames = { media: 'القسم الإعلامي', org: 'القسم التنظيمي', health: 'القسم الصحي', sci: 'القسم العلمي', mark: 'القسم التسويقي', design: 'قسم التصميم', legal: 'القسم القانوني' };
+        qs.forEach(docSnap => { const d = docSnap.data(); htmlTable += `<tr><td>${d.name}</td><td>${d.email}</td><td style="mso-number-format:'\\@';">${d.phone}</td><td style="mso-number-format:'\\@';">${d.nationalId}</td><td>${d.major}</td><td>${d.location}</td><td>${d.age}</td><td>${deptNames[d.department] || d.department}</td><td>${d.skill || 'غير محدد'}</td><td>${d.type === 'admin' ? 'إداري' : 'عضو'}</td></tr>`; });
+        htmlTable += `</table></body></html>`;
+        const blob = new Blob([htmlTable], { type: 'application/vnd.ms-excel' });
+        const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `كشف_كوادر_${dept === 'all' ? 'جميع_الأقسام' : dept}.xls`; link.click();
+      } catch (e) { console.error(e); alert("حدث خطأ فني أثناء استخراج ملف التقرير."); }
+    };
+
+    // Support message tickets
+    window.loadSupportTickets = async function() {
+      const tbody = document.getElementById("supportTicketsBody");
+      if (!tbody) return;
+      tbody.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:20px; color:var(--text-muted);'>جاري جلب رسائل الدعم الفني...</td></tr>";
+      try {
+        const qs = await getDocs(collection(db, "support_tickets"));
+        tbody.innerHTML = "";
+        if (qs.empty) { tbody.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:20px; color:var(--text-muted);'>صندوق الدعم الفني فارغ حالياً.</td></tr>"; return; }
+        qs.forEach(docSnap => {
+          const d = docSnap.data();
+          tbody.innerHTML += `<tr>
+            <td><strong>${d.name || 'غير محدد'}</strong><br><small style="color:var(--text-muted);">${d.email || 'بدون بريد'}</small><br><small style="color:var(--primary); font-family:var(--font-display);">${d.timestamp || ''}</small></td>
+            <td style="white-space:pre-wrap; text-align:justify; padding:12px; line-height:1.7;">${d.message || ''}</td>
+            <td><button class="btn-hms btn-danger btn-sm" onclick="window.deleteTicket('${docSnap.id}')"><i class="fa-solid fa-trash"></i> حل وإغلاق</button></td>
+          </tr>`;
+        });
+      } catch (e) { console.error(e); tbody.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:20px; color:var(--danger);'>حدث خطأ أثناء جلب الرسائل.</td></tr>"; }
+    };
+
+    window.deleteTicket = async function(id) {
+      if (confirm("هل تم مراجعة وحل المشكلة تماماً وتريد إغلاق وحذف هذا البلاغ نهائياً؟")) {
+        try { await deleteDoc(doc(db, "support_tickets", id)); window.loadSupportTickets(); }
+        catch (e) { console.error(e); alert("خطأ في حذف التذكرة السحابية."); }
+      }
+    };
+
+    // Album images gallery CMS
+    window.loadAlbumImages = async function() {
+      const tbody = document.getElementById("albumTableBody");
+      if (!tbody) return;
+      tbody.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:20px; color:var(--text-muted);'>جاري جلب صور الألبوم...</td></tr>";
+      try {
+        const qs = await getDocs(collection(db, "team_album"));
+        tbody.innerHTML = "";
+        if (qs.empty) { tbody.innerHTML = "<tr><td colspan='3' style='color:var(--text-muted); text-align:center; padding:15px;'>الألبوم فارغ حالياً.</td></tr>"; return; }
+        qs.forEach(docSnap => {
+          const d = docSnap.data();
+          tbody.innerHTML += `<tr>
+            <td><img src="${d.url}" style="width:60px; height:60px; object-fit:cover; border-radius:var(--radius-sm); border:1px solid var(--border);"></td>
+            <td>${d.caption}</td>
+            <td><button class="btn-hms btn-danger btn-sm" onclick="window.deleteAlbumImage('${docSnap.id}')"><i class="fa-solid fa-trash"></i> حذف</button></td>
+          </tr>`;
+        });
+      } catch (e) { console.error(e); tbody.innerHTML = "<tr><td colspan='3' style='color:var(--danger); text-align:center;'>خطأ في جلب الصور.</td></tr>"; }
+    };
+
+    window.addAlbumImage = async function() {
+      const fileInput = document.getElementById("albumImgFile");
+      const caption = document.getElementById("albumCaption").value.trim();
+      const progressSpan = document.getElementById("albumUploadProgress");
+      
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert("يرجى اختيار صورة من ملفات جهازك أولاً.");
+        return;
+      }
+      if (!caption) {
+        alert("يرجى كتابة عنوان أو مناسبة للصورة.");
+        return;
+      }
+      
+      const file = fileInput.files[0];
+      progressSpan.innerText = "جاري ضغط ومعالجة الصورة...";
+      
+      try {
+        const compressedBase64 = await window.compressAndGetBase64(file);
+        progressSpan.innerText = "جاري النشر للشبكة...";
+        await addDoc(collection(db, "team_album"), { url: compressedBase64, caption: caption, timestamp: new Date().getTime() });
+        progressSpan.innerText = "";
+        alert("تم رفع الصورة وإضافتها للألبوم بنجاح وبثها فوراً 🚀!");
+        fileInput.value = "";
+        document.getElementById("albumCaption").value = "";
+        window.loadAlbumImages();
+      } catch (e) {
+        console.error(e);
+        progressSpan.innerText = "";
+        alert("حدث خطأ غير متوقع أثناء معالجة الصورة.");
+      }
+    };
+
+    // Helper to compress and convert image to Base64 to bypass Storage plan restrictions
+    window.compressAndGetBase64 = function(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+          const img = new Image();
+          img.src = event.target.result;
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const maxW = 1000;
+            const maxH = 1000;
+            let w = img.width;
+            let h = img.height;
+            if (w > h) {
+              if (w > maxW) { h = Math.round((h * maxW) / w); w = maxW; }
+            } else {
+              if (h > maxH) { w = Math.round((w * maxH) / h); h = maxH; }
+            }
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+            resolve(dataUrl);
+          };
+          img.onerror = (err) => reject(err);
+        };
+        reader.onerror = (err) => reject(err);
+      });
+    };
+
+    window.deleteAlbumImage = async function(id) {
+      if (confirm("هل أنت متأكد من حذف هذه الصورة من الألبوم نهائياً؟")) {
+        try { await deleteDoc(doc(db, "team_album", id)); window.loadAlbumImages(); }
+        catch (e) { console.error(e); }
+      }
+    };
+
+    // CMS homepage text configurations
+    window.saveGeneralCMSData = async function() {
+      const data = {
+        affilText: document.getElementById("affilText").value,
+        aboutText: document.getElementById("aboutText").value
+      };
+      try {
+        await setDoc(doc(db, "settings", "homepage"), data, { merge: true });
+        alert("تم حفظ ونشر النصوص العامة بالموقع الموحد بنجاح 🚀!");
+      } catch (e) {
+        console.error(e);
+        alert("فشلت عملية حفظ النصوص العامة.");
+      }
+    };
+
+    window.loadCMSData = async function() {
+      try {
+        const docSnap = await getDoc(doc(db, "settings", "homepage"));
+        if (docSnap.exists()) {
+          const d = docSnap.data();
+          document.getElementById("affilText").value = d.affilText || "";
+          document.getElementById("aboutText").value = d.aboutText || "";
+        }
+        window.loadSlideshowSlides();
+      } catch (e) { console.error(e); }
+    };
+
+    window.loadSlideshowSlides = async function() {
+      const tbody = document.getElementById("slideshowTableBody");
+      try {
+        const qs = await getDocs(collection(db, "slideshow"));
+        tbody.innerHTML = "";
+        if (qs.empty) {
+          tbody.innerHTML = "<tr><td colspan='3' style='color:var(--text-muted); text-align:center; padding:15px;'>لا توجد شرائح مضافة حالياً.</td></tr>";
+          return;
+        }
+        
+        let slides = [];
+        qs.forEach(docSnap => {
+          const d = docSnap.data();
+          d.id = docSnap.id;
+          slides.push(d);
+        });
+        
+        slides.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        
+        slides.forEach(s => {
+          tbody.innerHTML += `<tr>
+            <td><img src="${s.img}" style="width:60px; height:40px; object-fit:cover; border-radius:4px;"></td>
+            <td style="text-align:right;"><strong>${s.title}</strong><br><small style="color:var(--text-secondary);">${s.desc}</small></td>
+            <td>
+              <button onclick="window.deleteSlideshowSlide('${s.id}')" class="btn-hms btn-danger btn-sm btn-icon-only" title="حذف الشريحة"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>`;
+        });
+      } catch (e) { console.error(e); }
+    };
+
+    window.addSlideshowSlide = async function() {
+      const title = document.getElementById("slideTitle").value.trim();
+      const desc = document.getElementById("slideDesc").value.trim();
+      const fileInput = document.getElementById("slideImgFile");
+      const progressSpan = document.getElementById("slideUploadProgress");
+      
+      if (!title || !desc) {
+        alert("يرجى تعبئة العنوان والوصف للشريحة.");
+        return;
+      }
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert("يرجى اختيار صورة شريحة العرض أولاً.");
+        return;
+      }
+      
+      const file = fileInput.files[0];
+      progressSpan.innerText = "جاري ضغط ومعالجة الصورة...";
+      
+      try {
+        const compressedBase64 = await window.compressAndGetBase64(file);
+        progressSpan.innerText = "جاري النشر للشبكة...";
+        await addDoc(collection(db, "slideshow"), { title, desc, img: compressedBase64, timestamp: new Date().getTime() });
+        progressSpan.innerText = "";
+        alert("تمت إضافة شريحة العرض بنجاح وبثها فوراً 🚀!");
+        document.getElementById("slideTitle").value = "";
+        document.getElementById("slideDesc").value = "";
+        fileInput.value = "";
+        window.loadSlideshowSlides();
+      } catch (e) {
+        console.error(e);
+        progressSpan.innerText = "";
+        alert("حدث خطأ غير متوقع أثناء معالجة الشريحة.");
+      }
+    };
+
+    window.deleteSlideshowSlide = async function(id) {
+      if (confirm("هل أنت متأكد من رغبتك في حذف شريحة العرض هذه؟")) {
+        try {
+          await deleteDoc(doc(db, "slideshow", id));
+          window.loadSlideshowSlides();
+        } catch (e) { console.error(e); }
+      }
+    };
+
+    window.saveDashCMS = async function() {
+      try { await setDoc(doc(db, "settings", "dashboard_cms"), { guideLink: document.getElementById("dashGuideLink").value, certNote: document.getElementById("dashCertNote").value }, { merge: true }); alert("تم تحديث وتأكيد نصوص لوحة المتطوعين الداخلية بنجاح!"); }
+      catch (e) { console.error(e); alert("خطأ بالحفظ الموجه للمتطوعين."); }
+    };
+
+    // Issue certificates
+    window.sendCertificate = async function() {
+      const email = document.getElementById("certUserEmail").value.trim().toLowerCase();
+      const title = document.getElementById("certTitle").value;
+      const link = document.getElementById("certLink").value;
+      if (!email || !title || !link) { alert("الرجاء استكمال كافة بيانات الشهادة."); return; }
+      try {
+        await addDoc(collection(db, "certificates"), { email: email, title: title, pdfLink: link, date: new Date().toLocaleDateString('ar-SA') });
+        alert("تم ضخ ورفع شهادة التقدير بنجاح لملف حساب المتطوع! 📤");
+        document.getElementById("certUserEmail").value = ""; document.getElementById("certTitle").value = ""; document.getElementById("certLink").value = "";
+      } catch (e) { console.error(e); alert("حدث خطأ أثناء الرفع السحابي للوثيقة."); }
+    };
+
+    // Leaderboard config
+    window.autoCalculateLeaderboard = async function() {
+      try {
+        const qs = await getDocs(collection(db, "users"));
+        let vols = [];
+        qs.forEach(d => { const u = d.data(); if (u.role !== 'owner' && u.role !== 'owner_deputy' && u.role !== 'general_admin') vols.push({ name: u.name, hours: Number(u.hours) || 0 }); });
+        vols.sort((a, b) => b.hours - a.hours);
+        if (vols[0]) { document.getElementById("top1Name").value = vols[0].name; document.getElementById("top1Hours").value = vols[0].hours; }
+        if (vols[1]) { document.getElementById("top2Name").value = vols[1].name; document.getElementById("top2Hours").value = vols[1].hours; }
+        if (vols[2]) { document.getElementById("top3Name").value = vols[2].name; document.getElementById("top3Hours").value = vols[2].hours; }
+        alert("عملية ذكية ناجحة: تم جلب المتطوعين الأكثر عطاءً بشكل آلي. يرجى الضغط على حفظ لتأكيد النشر.");
+      } catch (e) { console.error(e); alert("خطأ في فرز وحساب المراتب."); }
+    };
+
+    window.saveLeaderboard = async function() {
+      const data = { top1: { name: document.getElementById("top1Name").value, hours: Number(document.getElementById("top1Hours").value) }, top2: { name: document.getElementById("top2Name").value, hours: Number(document.getElementById("top2Hours").value) }, top3: { name: document.getElementById("top3Name").value, hours: Number(document.getElementById("top3Hours").value) } };
+      try { await setDoc(doc(db, "settings", "leaderboard"), data); alert("تم اعتماد ونشر قائمة الشرف السنوية للمتطوعين بنجاح!"); }
+      catch (e) { console.error(e); }
+    };
+
+    window.loadLeaderboard = async function() {
+      try {
+        const docSnap = await getDoc(doc(db, "settings", "leaderboard"));
+        if (docSnap.exists()) {
+          const l = docSnap.data();
+          if (l.top1) { document.getElementById("top1Name").value = l.top1.name || ""; document.getElementById("top1Hours").value = l.top1.hours || ""; }
+          if (l.top2) { document.getElementById("top2Name").value = l.top2.name || ""; document.getElementById("top2Hours").value = l.top2.hours || ""; }
+          if (l.top3) { document.getElementById("top3Name").value = l.top3.name || ""; document.getElementById("top3Hours").value = l.top3.hours || ""; }
+        }
+      } catch (e) { console.error(e); }
+    };
+
+    // Deep Analytics summary builder
+    window.generateAnalyticsReport = async function() {
+      const container = document.getElementById("analyticsReportContainer");
+      container.innerHTML = "<h4>جاري سحب الجداول ومعالجة المؤشرات...</h4>";
+      container.style.display = "block";
+      try {
+        const users = await getDocs(collection(db, "users")); 
+        const inits = await getDocs(collection(db, "initiatives")); 
+        const regs = await getDocs(collection(db, "registrations")); 
+        const certs = await getDocs(collection(db, "certificates"));
+        let totalHours = 0; let totalLeaders = 0; let totalVols = 0;
+        users.forEach(u => { const d = u.data(); totalHours += (Number(d.hours) || 0); if (d.role && d.role !== 'volunteer') totalLeaders++; else totalVols++; });
+        
+        container.innerHTML = `<div style="text-align:center; margin-bottom:16px;">
+          <h4 style="color:var(--text-primary);">توقيت تحديث التقرير: <span class="font-en">${new Date().toLocaleString('ar-SA')}</span></h4>
+        </div>
+        <h4 style="color:var(--success); border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:12px;"><i class="fa-solid fa-chart-pie"></i> الهيكل البشري والتوزيع القيادي</h4>
+        <div class="grid-container" style="margin-bottom:16px;">
+          <div class="col-4 col-md-12">
+            <div class="hms-card" style="text-align:center; background:var(--background);">
+              <h4 style="font-size:0.8rem; color:var(--text-secondary);">إجمالي الأعضاء بالمنصة</h4>
+              <span class="font-en" style="font-size:1.4rem; font-weight:800; color:var(--primary);">${users.size} عضو</span>
+            </div>
+          </div>
+          <div class="col-4 col-md-12">
+            <div class="hms-card" style="text-align:center; background:var(--background);">
+              <h4 style="font-size:0.8rem; color:var(--text-secondary);">الكوادر والقيادات</h4>
+              <span class="font-en" style="font-size:1.4rem; font-weight:800; color:var(--primary);">${totalLeaders} قائد</span>
+            </div>
+          </div>
+          <div class="col-4 col-md-12">
+            <div class="hms-card" style="text-align:center; background:var(--background);">
+              <h4 style="font-size:0.8rem; color:var(--text-secondary);">المتطوعين الميدانيين</h4>
+              <span class="font-en" style="font-size:1.4rem; font-weight:800; color:var(--primary);">${totalVols} متطوع</span>
+            </div>
+          </div>
+        </div>
+        <h4 style="color:var(--warning); border-bottom:1px solid var(--border); padding-bottom:8px; margin-top:20px; margin-bottom:12px;"><i class="fa-solid fa-gauge-high"></i> مقاييس الإنتاجية والإنجاز الكلية</h4>
+        <div class="grid-container">
+          <div class="col-4 col-md-12">
+            <div class="hms-card" style="text-align:center; background:var(--background);">
+              <h4 style="font-size:0.8rem; color:var(--text-secondary);">الساعات التراكمية الممنوحة</h4>
+              <span class="font-en" style="font-size:1.4rem; font-weight:800; color:var(--primary);">${totalHours} Hrs</span>
+            </div>
+          </div>
+          <div class="col-4 col-md-12">
+            <div class="hms-card" style="text-align:center; background:var(--background);">
+              <h4 style="font-size:0.8rem; color:var(--text-secondary);">المبادرات المنجزة والنشطة</h4>
+              <span class="font-en" style="font-size:1.4rem; font-weight:800; color:var(--primary);">${inits.size} مبادرة</span>
+            </div>
+          </div>
+          <div class="col-4 col-md-12">
+            <div class="hms-card" style="text-align:center; background:var(--background);">
+              <h4 style="font-size:0.8rem; color:var(--text-secondary);">شهادات التقدير المودعة</h4>
+              <span class="font-en" style="font-size:1.4rem; font-weight:800; color:var(--primary);">${certs.size} وثيقة</span>
+            </div>
+          </div>
+        </div>`;
+      } catch (e) { console.error(e); alert("خطأ في معالجة سجلات السحابة."); }
+    };
+
+    // Session Idle Timeout
+    let idleTimer; let logoutTimer; let countdownInterval;
+    const IDLE_LIMIT = 5 * 60 * 1000; const WARNING_TIME = 30;
+    let isUserLoggedIn = false;
+
+    function resetIdleTimer() {
+      if (!isUserLoggedIn) return;
+      clearTimeout(idleTimer); clearTimeout(logoutTimer); clearInterval(countdownInterval);
+      const tm = document.getElementById('timeoutModal'); if (tm) tm.style.display = 'none';
+      idleTimer = setTimeout(showTimeoutWarning, IDLE_LIMIT);
+    }
+    function showTimeoutWarning() {
+      const tm = document.getElementById('timeoutModal'); if (tm) tm.style.display = 'flex';
+      let timeLeft = WARNING_TIME; document.getElementById('countdownText').innerText = timeLeft;
+      countdownInterval = setInterval(() => { timeLeft--; document.getElementById('countdownText').innerText = timeLeft; if (timeLeft <= 0) clearInterval(countdownInterval); }, 1000);
+      logoutTimer = setTimeout(() => { signOut(auth).then(() => { window.location.href = "login.html"; }); }, WARNING_TIME * 1000);
+    }
+    window.stayLoggedIn = function() { resetIdleTimer(); };
+    ['mousemove', 'keydown', 'scroll', 'click', 'touchstart'].forEach(evt => document.addEventListener(evt, resetIdleTimer));
+
+    document.getElementById("sidebarLogoutBtn").addEventListener("click", (e) => {
+      e.preventDefault();
+      signOut(auth).then(() => { window.location.href = "gateway.html"; });
+    });
+
+    // Render Dashboard Charts (Chart.js)
+    let myChart = null;
+    function renderCharts() {
+      const ctx = document.getElementById('appointmentsTrendChart').getContext('2d');
+      const isLight = document.body.classList.contains('light-mode');
+      
+      const textPrimary = getComputedStyle(document.body).getPropertyValue('--text-primary').trim();
+      const borderTheme = getComputedStyle(document.body).getPropertyValue('--border').trim();
+      
+      const labelColor = isLight ? '#64748B' : '#94A3B8';
+      const gridColor = isLight ? '#F1F5F9' : '#334155';
+
+      if (myChart) myChart.destroy();
+
+      myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو'],
+          datasets: [{
+            label: 'المتطوعين النشطين',
+            data: [65, 82, 110, 95, 130, 160, 210],
+            borderColor: '#14B8A6',
+            backgroundColor: 'rgba(20, 184, 166, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+          }, {
+            label: 'المبادرات المكتملة',
+            data: [12, 18, 24, 20, 28, 35, 42],
+            borderColor: '#06B6D4',
+            backgroundColor: 'rgba(6, 182, 212, 0.05)',
+            borderWidth: 2,
+            fill: false,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                color: labelColor,
+                font: { family: 'Cairo', weight: 'bold' }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: gridColor },
+              ticks: { color: labelColor, font: { family: 'Cairo' } }
+            },
+            y: {
+              grid: { color: gridColor },
+              ticks: { color: labelColor, font: { family: 'Outfit' } }
+            }
+          }
+        }
+      });
+    }
+
+    // Listener for theme changes
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(renderCharts, 500);
+      window.addEventListener('themechanged', renderCharts);
+    });
+  </script>
+</body>
+</html>
